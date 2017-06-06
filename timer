@@ -1,0 +1,53 @@
+#import <Foundation/Foundation.h>
+
+@interface NSTimer (EocBlockSupports)
+
++(NSTimer *)eocScheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval block:(void(^)()) block repeats:(BOOL)repeat;
+
+@end
+
+
+#import "NSTimer+EocBlockSupports.h"
+
+@implementation NSTimer (EocBlockSupports)
+
+
++(NSTimer *)eocScheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval block:(void(^)()) block repeats:(BOOL)repeat{
+    return  [self scheduledTimerWithTimeInterval:timeInterval target:self selector:@selector(startTimer:) userInfo:[block copy] repeats:repeat];
+}
+
+//定时器所执行的方法
++(void)startTimer:(NSTimer *)timer{
+    void(^block)() = timer.userInfo;
+    if (block) {
+        block();
+    }
+    
+}
+@end
+
+//- (void)setCellInfo:(NSString *)string{
+//    self.showString = string;
+////    CGFloat width = [self.showString getWidthWithLimitHeight:15 fontSize:13];
+////    self.flowLayout.itemSize = CGSizeMake(width+20, 39);
+//
+////    [self startTimer];
+//
+//}
+//
+//-(void)startTimer{
+//
+//    __weak  typeof(self) weakSelf = self;
+//    if (!_timer) {
+//        _timer = [NSTimer eocScheduledTimerWithTimeInterval:0.08 block:^{
+//            CGPoint p = weakSelf.collectionView.contentOffset;
+//            p.x = p.x + 30;
+//            [weakSelf.collectionView setContentOffset:p animated:YES];
+//            if (p.x >= weakSelf.flowLayout.itemSize.width*kCellCount ) {
+//                weakSelf.collectionView.contentOffset = CGPointMake(0, 0);
+//            }
+//        } repeats:YES];
+//        [[NSRunLoop currentRunLoop] addTimer:weakSelf.timer forMode:NSRunLoopCommonModes];
+//        [_timer fire];
+//    }
+//}

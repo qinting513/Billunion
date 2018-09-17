@@ -1,0 +1,113 @@
+
+//
+//  TestTableViewController.m
+//  Billunion
+//
+//  Created by QT on 17/1/24.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "TestTableViewController.h"
+#import "YYRrefreshControl.h"
+#import "YYRefreshFooterView.h"
+
+@interface TestTableViewController ()
+@property (nonatomic,strong)  YYRrefreshControl *headerRefresh;
+@property (nonatomic,strong)  YYRefreshFooterView *footerRefresh;
+@end
+
+@implementation TestTableViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.tabBarController.tabBar.hidden = YES;
+    self.tableView.tableFooterView = [UIView new];
+    self.tableView.backgroundColor = [UIColor purpleColor];
+    _headerRefresh = [[YYRrefreshControl alloc] init];
+    [_headerRefresh addTarget:self action:@selector(headerRefresh:) forControlEvents:UIControlEventValueChanged];
+    [self.tableView addSubview:_headerRefresh];
+    
+    _footerRefresh = [[YYRefreshFooterView alloc]init];
+    [_footerRefresh addTarget:self action:@selector(footerRefresh:) forControlEvents:UIControlEventValueChanged];
+    [self.tableView addSubview:_footerRefresh];
+}
+
+// 接收通知监听的方法
+- (void)headerRefresh:(YYRrefreshControl*)refreshControl{
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSLog(@"-------:%ld",refreshControl.superview.tag);
+        [refreshControl endRefreshing];
+    });
+    
+}
+
+-(void)footerRefresh:(YYRefreshFooterView*)footerView
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSLog(@"结束刷新");
+        [footerView endRefreshing];
+    });
+    
+}
+
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+
+    return 26;
+}
+
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell" ];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:0 reuseIdentifier:@"cell"];
+    }
+    cell.textLabel.text = [NSString stringWithFormat:@"test:%ld",indexPath.row];
+    
+    return cell;
+}
+
+/*
+// Override to support editing the table view.
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        // Delete the row from the data source
+        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
+        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+    }   
+}
+*/
+
+/*
+// Override to support rearranging the table view.
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
+}
+*/
+
+/*
+// Override to support conditional rearranging of the table view.
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+    // Return NO if you do not want the item to be re-orderable.
+    return YES;
+}
+*/
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end

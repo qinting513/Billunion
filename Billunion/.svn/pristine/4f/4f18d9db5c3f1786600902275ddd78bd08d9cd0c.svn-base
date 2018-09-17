@@ -1,0 +1,84 @@
+
+//
+//  AskBuyCell.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/6.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+
+#import "AskBuyCell.h"
+
+#define kTopMargin 10
+#define kLabelHeight 20
+
+@interface AskBuyCell ()
+
+@end
+
+@implementation AskBuyCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        [self setupUI];
+    }
+    return self;
+}
+
+- (void)setupUI{
+    UIView *superView = self.contentView;
+    self.askBuyLabel = [UILabel labelWithText:@"询价方:" fontSize:13.0 textColor:[UIColor colorWithRGBHex:0xffffff] alignment:NSTextAlignmentLeft];
+    [superView addSubview:self.askBuyLabel];
+    
+    self.rateLabel = [UILabel labelWithText:@"贴现率:" fontSize:13.0 textColor:[UIColor colorWithRGBHex:0xffffff] alignment:NSTextAlignmentLeft];
+    [superView addSubview:self.rateLabel];
+    
+    self.moneyLabel = [UILabel labelWithText:@"金额(万):000.00" fontSize:13.0 textColor:[UIColor colorWithRGBHex:0xffffff] alignment:NSTextAlignmentLeft];
+     [self.moneyLabel sizeToFit];
+    [superView addSubview:self.moneyLabel];
+    
+    self.tradeModeLabel = [UILabel labelWithText:@"成交类型:批量成交" fontSize:13.0 textColor:[UIColor colorWithRGBHex:0xffffff] alignment:NSTextAlignmentLeft];
+    [superView addSubview:self.tradeModeLabel];
+ 
+}
+
+-(void)layoutUI{
+    UIView *superView = self.contentView;
+    if (!self.tradeModeLabel.hidden && IsIphone5S) {
+        CGFloat kLeftMargin = 5;
+        self.askBuyLabel.sd_layout.topSpaceToView(superView,kTopMargin).leftSpaceToView(superView,kLeftMargin).rightSpaceToView(superView,kLeftMargin).heightIs(kLabelHeight);
+        self.rateLabel.sd_layout.topSpaceToView(self.askBuyLabel,kTopMargin*0.5).leftSpaceToView(superView,kLeftMargin).heightIs(kLabelHeight).widthIs(90);
+        self.moneyLabel.sd_layout.centerYEqualToView(self.rateLabel).leftSpaceToView(self.rateLabel,kLeftMargin).heightIs(kLabelHeight);
+        [self.moneyLabel setSingleLineAutoResizeWithMaxWidth:150];
+        self.tradeModeLabel.sd_layout.centerYEqualToView(self.rateLabel).leftSpaceToView(self.moneyLabel,kLeftMargin).heightIs(kLabelHeight).rightSpaceToView(superView,kLeftMargin);
+    }else{
+        CGFloat kLeftMargin = 15;
+        CGFloat width = (WIDTH-3*kLeftMargin)/3.0;
+        self.askBuyLabel.sd_layout.topSpaceToView(superView,kTopMargin).leftSpaceToView(superView,kLeftMargin).rightSpaceToView(superView,kLeftMargin).heightIs(kLabelHeight);
+        self.rateLabel.sd_layout.topSpaceToView(self.askBuyLabel,kTopMargin*0.5).leftSpaceToView(superView,kLeftMargin).widthIs(100).heightIs(kLabelHeight);
+        self.moneyLabel.sd_layout.centerYEqualToView(self.rateLabel).leftSpaceToView(self.rateLabel,kLeftMargin).heightIs(kLabelHeight);
+         [self.moneyLabel setSingleLineAutoResizeWithMaxWidth:180];
+        self.tradeModeLabel.sd_layout.centerYEqualToView(self.rateLabel).leftSpaceToView(self.moneyLabel,kLeftMargin).widthIs(width).heightIs(kLabelHeight);
+    }
+}
+
+
+-(void)setKLineType:(KLINE_TYPE)kLineType
+{
+    _kLineType = kLineType;
+    if (kLineType == KLine_nearStock ||
+        kLineType == KLine_beSellerSpecify ||
+        kLineType == KLine_sellerSpecify   ||
+        kLineType == KLine_buyerInquiry) {
+        self.tradeModeLabel.hidden = NO;
+    }else{
+        self.tradeModeLabel.hidden = YES;
+    }
+    [self layoutUI];
+}
+
+
+@end

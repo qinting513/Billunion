@@ -1,0 +1,199 @@
+
+//
+//  HomeViewModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/19.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "HomeViewModel.h"
+#import "NoticeModel.h"
+#import "FGNetworking.h"
+#import "IndexModel.h"
+#import "MoreIndexModel.h"
+
+@interface HomeViewModel ()
+
+@end
+
+@implementation HomeViewModel
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.dataArray = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+
+
+//- (void)setupDataArray{
+//    for (int i = 0; i < 20; i++) {
+//        NoticeModel *model = [[NoticeModel alloc] init];
+//        NSString *string = [NSString stringWithFormat:@"jfdsjkfjdsjfdjsklfirejdklklfkdlsf%d",i];
+//        
+//        if (i == 5) {
+//            string = [NSString stringWithFormat:@"%@在很多需要限制一台设备一个账号的应用中经常会用到,在Symbian时代,我们是使用IMEI作为设备的唯一标识的,可惜的是Apple官方不允许开发者获得设备的IMEI%d",string,i];
+//        }
+//        if (i == 10) {
+//            string = [NSString stringWithFormat:@"在很多需要限制一台设备一个账号的应用中经常会用到,在Symbian时代,我们是使用IMEI作为设备的唯一标识的%d",i];
+//        }
+//        model.title = string;
+//        
+//        NSString *time = [NSString stringWithFormat:@"I am time%d",i];
+//        model.createTime = @(time.floatValue);
+//        [self.dataArray addObject:model];
+//    }
+//}
+
+//请求系统消息
+
++ (void)requestNoticeWithPage:(NSInteger)page
+                      itemNum:(NSInteger)num
+                   noticeType:(NoticeType)noticeType
+                     response:(void(^)(NSArray *dataArray,NSString *errorStr))block{
+        NSMutableDictionary *params = [NSMutableDictionary dictionary];
+        NSString *path = nil;
+        NSNumber *operType = nil;
+        if (noticeType == NoticeTypeNews) {
+            // 今日要闻列表
+           operType = @402;
+            path = NEWS_LIST;
+        }else{
+            //公告列表  OperType 400
+           operType = @400;
+            path = NOTICE_LIST;
+        }
+        
+        params[@"Page"] = @(page);
+        params[@"ItemNum"] = @(num);
+
+    NSDictionary * dict = @{  @"OperType":operType,
+                              @"Param":params
+                            };
+    DEBUGLOG(@"%@ \n %@",path,params);
+   [FGNetworking requsetWithPath:path params:dict method:Post handleBlcok:^(id response, NSError *error) {
+     DEBUGLOG(@"%@ \n %@",path,response);
+       if (!error) {
+           if ([response[@"Status"] intValue] == 0 || response[@"Data"])  {
+          
+                   NSArray *arrary = [NoticeModel mj_objectArrayWithKeyValuesArray:response[@"Data"]];
+                   block(arrary,nil);
+           }else{
+                 block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+           }
+       }
+   }];
+}
+
+
++(void)requestIndexResponse:( void(^)(NSArray*dataArray,NSString *errorStr))block
+{
+    NSDictionary * params = @{
+                              @"OperType":@307,
+                              };
+    /** 指数 */
+    __block NSMutableArray *dataList = [NSMutableArray array];
+    [FGNetworking requsetWithPath:INDEX params:params method:Post handleBlcok:^(id response, NSError *error) {
+    DEBUGLOG(@"%@ \n %@",INDEX,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0 && [response[@"Data"] isKindOfClass:[NSArray class]]) {
+                    NSArray *arr = [IndexModel mj_objectArrayWithKeyValuesArray:response[@"Data"]];
+                    [dataList addObjectsFromArray:arr];
+                    if (dataList.count == 3) {
+                        block(dataList,nil);
+                    }
+            }else{
+                block(nil,NSLocalizedString(@"NO_MORE_DATA", nil) );
+            }
+        }else{
+            block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+//            NSLog(@"网络请求出错：%@",error);
+        }
+    }];
+    
+    NSDictionary *params1 = @{
+        @"OperType": @309,
+        @"Param": @{
+//            "CompanyId": null, // 企业ID
+//            "BillType": null,   //产品类型
+//            "AcceptorType": null,  // 承兑人类型
+//            "DueTime": null   //票据期限
+          }
+        };
+    
+    /** 成交量 */
+    DEBUGLOG(@"%@ \n %@",QUERY_TRADE_VALUE,params1);
+    [FGNetworking requsetWithPath:QUERY_TRADE_VALUE params:params1 method:Post handleBlcok:^(id response, NSError *error) {
+     DEBUGLOG(@"%@ \n %@",QUERY_TRADE_VALUE,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0 && response[@"Data"] ) {
+                    MoreIndexModel *moreIndexModel = [MoreIndexModel mj_objectWithKeyValues:response[@"Data"]];
+                    [dataList addObject:moreIndexModel];
+                    if (dataList.count == 3) {
+                        block(dataList,nil);
+                    }
+            }else{
+                 block(nil,NSLocalizedString(@"NO_MORE_DATA", nil) );
+            }
+        }else{
+                block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+        }
+    }];
+}
+
+
+
++ (void)requestNoticeDetailWithId:(NSNumber *)newsId  noticeType:(NoticeType)noticeType response:(void(^)(id model ,NSString *errorStr))block{
+    if (!newsId) {
+         block(nil,NSLocalizedString(@"ERROR_GET_DATA_FAIL", nil) );
+        return;
+    }
+    NSString *path = nil;
+    NSNumber *operType = nil;
+    if (noticeType == NoticeTypeNews) {
+        // 今日要闻列表
+        operType = @403;
+        path = NEWS_DETAIL;
+    }else{
+        //公告列表
+        operType = @401;
+        path = NOTICE_DETAIL;
+    }
+    
+    NSDictionary * params = @{@"OperType":operType,
+                              @"Param":@{ @"Id":newsId }};
+    DEBUGLOG(@"%@ \n %@",path,params);
+    [FGNetworking requsetWithPath:path params:params method:Post handleBlcok:^(id response, NSError *error) {
+    DEBUGLOG(@"%@ \n %@",path,response);
+        if (!error) {
+            int statusCode  = [response[@"Status"] intValue];
+            if (statusCode == 0) {
+                if (response[@"Data"] && ![response[@"Data"] isKindOfClass:[NSNull class]]) {
+                    NoticeModel *model = [NoticeModel mj_objectWithKeyValues:response[@"Data"]];
+                    block(model,nil);
+                }else{
+                     block(nil,NSLocalizedString(@"ERROR_GET_DATA_FAIL", nil) );
+                }
+            }else{
+                 block(nil,NSLocalizedString(@"ERROR_GET_DATA_FAIL", nil) );
+            }
+        }else{
+             block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+        }
+    }];
+}
+
++ (NSNumber *)getNewsId:(id)noticeModel{
+    if ([noticeModel isKindOfClass:[NoticeModel class]]) {
+        return ((NoticeModel *)noticeModel).Id;
+    }
+    return nil;
+}
+
+@end

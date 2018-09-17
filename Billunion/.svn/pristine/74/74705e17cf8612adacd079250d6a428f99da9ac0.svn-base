@@ -1,0 +1,166 @@
+//
+//  MineViewController.m
+//  Billunion
+//
+//  Created by QT on 17/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "MineViewController.h"
+#import "MineCell.h"
+#import "QuestionViewController.h"
+#import "AboutUsViewController.h"
+#import "MyProfileViewController.h"
+#import "LoginViewModel.h"
+#import "LoginViewController.h"
+#import "MoreNoticeViewController.h"
+#import "BaseNavViewController.h"
+
+@interface MineViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (nonatomic,strong)UITableView *tableView;
+@property (nonatomic,strong)NSArray *images;
+@property (nonatomic,strong)NSArray *titles;
+@end
+
+@implementation MineViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    self.title =  NSLocalizedString(@"Me", nil);
+    self.tableView.hidden = NO;
+    
+    [self layoutLoginOut];
+}
+
+-(NSArray *)titles
+{
+    if (_titles == nil) {
+        _titles = [Tools getMineTitles];
+    }
+    return _titles;
+}
+-(NSArray *)images
+{
+    if (!_images) {
+        _images = @[@"icons_message",@"icons_about",@"icons_feekback",@"icons_update",@"icons_inform"];
+    }
+    return _images;
+}
+
+-(UITableView *)tableView{
+    if (_tableView == nil) {
+        _tableView = [[UITableView alloc]initWithFrame:
+                      CGRectMake(0, 64, WIDTH, HEIGHT-64) style:UITableViewStylePlain];
+        _tableView.dataSource = self;
+        _tableView.delegate = self;
+        _tableView.tableFooterView = [UIView new];
+        _tableView.backgroundColor = [UIColor blackColor];
+        _tableView.rowHeight = 48;
+        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        [self.view addSubview:_tableView];
+    }
+    return _tableView;
+}
+
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+   return self.titles.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *cellID = @"MineCell";
+    MineCell *cell = [tableView dequeueReusableCellWithIdentifier:cellID];
+    if (cell == nil) {
+        cell = [[MineCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellID];
+    }
+    cell.imageView.image = [UIImage imageNamed:self.images[indexPath.row]];
+    cell.textLabel.text = self.titles[indexPath.row];
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    UIViewController *vc;
+    switch (indexPath.row) {
+        case 0:
+            {
+                vc = [[MyProfileViewController alloc]init];
+                break;
+            }
+        case 1:
+            {
+                vc = [[AboutUsViewController alloc]init];
+                 break;
+            }
+        case 2:
+            {
+               vc = [[QuestionViewController alloc]init];
+               break;
+            }
+           
+        case 3:
+            {  // 检查更新
+                vc = [[UIViewController alloc]init];
+            }
+            break;
+        case 4:
+        {
+          MoreNoticeViewController *  viewController = [[MoreNoticeViewController alloc]init];
+          viewController.noticeType = NoticeTypeSystem;
+          vc = viewController;
+        }
+            break;
+        default:
+           break;
+    }
+     [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)layoutLoginOut{
+    UIButton *loginOutBtn = [UIButton buttonWithTitle:NSLocalizedString(@"Logout", nil) titleFont:14 titleColor:[UIColor  whiteColor] target:self action:@selector(loginOut)];
+    loginOutBtn.backgroundColor = [UIColor colorWithRGBHex:0x1c4473];
+    loginOutBtn.frame = CGRectMake(30, HEIGHT-50, WIDTH-60, 30);
+    loginOutBtn.layer.cornerRadius = 5;
+    
+    [self.view addSubview:loginOutBtn];
+}
+
+- (void)loginOut{
+    __weak typeof(self) weakSelf = self;
+    [LoginViewModel loginOutResponse:^(NSInteger loginOutStatus) {
+        NSString *message = NSLocalizedString(@"LogoutSuccess", nil);
+        if (loginOutStatus != 0) {
+            message =  NSLocalizedString(@"LogoutFail", nil);
+        }
+        [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil)
+                                            message:message
+                                            okTitle:NSLocalizedString(@"Sure", nil)
+                                        cancelTtile:nil
+                                             target:self
+                                         clickBlock:^(BOOL ok, BOOL cancel) {
+            if (ok) {
+                [weakSelf chanegRootViewControllerWithStatus:loginOutStatus];
+            }
+        }];
+        
+    }];
+}
+
+- (void)chanegRootViewControllerWithStatus:(NSInteger)loginOutStatus{
+    if (loginOutStatus == 0) {
+        [Tools saveUserLoginStatus:@"NO"];
+        [UIApplication sharedApplication].keyWindow.rootViewController = [[BaseNavViewController alloc]initWithRootViewController:[LoginViewController new]];
+    }
+}
+
+
+
+@end

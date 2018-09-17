@@ -1,0 +1,484 @@
+//
+//  NearStockMapViewController.m
+//  Billunion
+//
+//  Created by QT on 17/2/14.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "NearStockMapViewController.h"
+
+#import "FilterViewController.h"
+#import "QTAnnotation.h"
+#import "MapInfoView.h"
+
+#import <MAMapKit/MAMapKit.h>
+#import <AMapFoundationKit/AMapFoundationKit.h>
+#import <AMapLocationKit/AMapLocationKit.h>
+#import <AMapNaviKit/AMapNaviKit.h>
+#import <CoreLocation/CoreLocation.h>
+
+#import "KLineViewController.h"
+#import "MarketViewModel.h"
+#import "KLineViewModel.h"
+#import "SellDetailModel.h"
+#import "BuyerDetailModel.h"
+#import "FGNetworking.h"
+#import "NearStockViewModel.h"
+#import "MapModel.h"
+
+
+#define DefaultLocationTimeout  6
+#define kInfoViewHeight 129
+#define kMargin  STRealX(35)
+
+@interface NearStockMapViewController ()<MAMapViewDelegate,AMapLocationManagerDelegate>
+
+@property (nonatomic, strong) MAMapView *mapView;
+/** 定位 */
+@property (nonatomic, strong) AMapLocationManager *locationManager;
+@property (nonatomic, copy)   AMapLocatingCompletionBlock completionBlock;
+
+/** 地理编码所有的点 保存在这个数组 */
+@property (nonatomic,strong) NSMutableArray *geoAnnotations;
+/** 传递到infoView的数组 */
+@property (nonatomic,strong) NSMutableArray *infoViewDatas;
+/** 展示信息 */
+@property (nonatomic,strong) MapInfoView *infoView;
+/** 用户的位置点 */
+@property (nonatomic,strong) QTAnnotation *userAnnotation;
+/** 在指定范围内的点 添加到这个数组里 */
+@property (nonatomic,strong)NSMutableArray *calAnnotations;
+/** 指定的目标范围 */
+@property (nonatomic,assign) double targetDistance;
+
+@property (nonatomic,strong) NearStockViewModel *viewModel;
+
+/** 过滤条件 */
+@property (nonatomic,strong)NSMutableDictionary *filterDict;
+
+
+@end
+
+@implementation NearStockMapViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    self.targetDistance = 50000; //50km
+    self.title = NSLocalizedString(@"NearStock", nil);
+    [AMapServices sharedServices].apiKey = @"621bd5612c3b7735fd771f2152619a09";
+    [self initMapView];
+    [self setupRightBarBtn];
+    [self loadData];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear: animated];
+   
+    [self.locationManager setDelegate:self];
+    [self.mapView setDelegate:self];
+    [self.mapView showAnnotations:self.calAnnotations
+                      edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [Hud hide];
+    [self clearData];
+    
+}
+
+-(void)clearData{
+    [self.locationManager stopUpdatingLocation];
+    [self.locationManager setDelegate:nil];
+    [self.mapView setDelegate:nil];
+}
+
+#pragma mark - 加载数据
+-(NearStockViewModel *)viewModel
+{
+    if (!_viewModel) {
+        _viewModel = [[NearStockViewModel alloc]init];
+    }
+    return _viewModel;
+}
+
+
+
+-(void)loadData{
+
+    [self.calAnnotations removeAllObjects];
+    [self.infoViewDatas  removeAllObjects];
+    [self.geoAnnotations removeAllObjects];
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    
+    [Hud showActivityIndicator];
+   __weak typeof(self) weakSelf = self;
+    
+  [self.viewModel requestDataWithType:KLine_sellerMarket
+                         acceptorType: self.filterDict[kAcceptor]
+                         dueTimeRange:self.filterDict[kDueTimeRange]
+                          finishBlock:^(id model,NSString *errorStr) {
+      [Hud hide];
+      if (errorStr) {
+          [Hud showTipsText:errorStr];
+           self.infoView.hidden = YES;
+      }else{
+        self.infoView.hidden = (self.calAnnotations.count == 0 );
+        [weakSelf geoCodeWithMapModel:model];
+      }
+       
+  }];
+}
+
+
+// 地理编码(地址关键字 ->经纬度 )
+- (void)geoCodeWithMapModel:(MapModel*)model {
+    // 容错处理
+    if([model.Remarks length] == 0)
+    {
+        return;
+    }
+
+    CLGeocoder *cLGeocoder = [[CLGeocoder alloc] init];
+    // 根据地址关键字, 进行地理编码
+    __weak typeof(self) weakSelf = self;
+    [cLGeocoder geocodeAddressString:model.Remarks completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+        
+        CLPlacemark *pl = [placemarks firstObject];
+        if(error == nil)
+        {
+            for ( QTAnnotation *anno in weakSelf.geoAnnotations) {
+                if (anno.mapModel.InquiryId == model.InquiryId) {
+                    return ;
+                }
+            }
+                QTAnnotation *annotation = [[QTAnnotation alloc] init];
+                annotation.mapModel = model;
+                [annotation setCoordinate:pl.location.coordinate];
+                NSLog(@"地址找到 %@ -- %f-- %f -- %@",model.Remarks,pl.location.coordinate.longitude,pl.location.coordinate.latitude,model.InquiryId);
+                [annotation setTitle:model.Remarks];
+                annotation.imageString = @"icons_header_other";
+                annotation.subtitle = [NSString stringWithFormat:@"金额(万):%.2f   贴现率:%.2f%%",
+                                                        model.Amount.floatValue/10000.0,model.DiscountRate.floatValue];
+                [weakSelf.geoAnnotations addObject:annotation];
+                
+                [weakSelf calculateDistancesWithTargetMeter:weakSelf.targetDistance];
+        
+        }else{
+            NSLog(@"地址没找到，可能在月球上:%@ -- %@",model.Remarks,error);
+        }
+    }];
+
+}
+
+#pragma mark - 重新筛选满足指定范围内的票
+-(void)calculateDistancesWithTargetMeter:(CLLocationDistance)target{
+    
+    CLLocation *first =[[CLLocation alloc] initWithLatitude:self.userAnnotation.coordinate.latitude longitude:self.userAnnotation.coordinate.longitude];
+    for (QTAnnotation  *anno in self.geoAnnotations) {
+        CLLocation *second =[[CLLocation alloc] initWithLatitude:anno.coordinate.latitude longitude:anno.coordinate.longitude];
+        CLLocationDistance meters = [first distanceFromLocation:second];
+        NSLog(@"meters:%lf -- %@",meters,anno.title);
+ 
+        // 满足条件 则添加
+        if (meters < target) {
+            if (![self.calAnnotations containsObject:anno]) {
+                
+                [self.calAnnotations addObject:anno];
+                [self.infoViewDatas addObject:anno.mapModel];
+                
+                [self.infoViewDatas sortUsingComparator:^NSComparisonResult( MapModel *obj1,  MapModel *obj2){
+                    return obj1.DiscountRate.floatValue > obj2.DiscountRate.floatValue;
+                }];
+                self.infoView.dataArr = self.infoViewDatas;
+                [self.infoView.tableView reloadData];
+            }
+        }else{
+            // 不满足条件的 则移除
+            [self.calAnnotations removeObject:anno];
+            [self.mapView removeAnnotation:anno];
+            NSInteger index = self.infoViewDatas.count + 1;
+            for ( MapModel *model in self.infoViewDatas) {
+                if ([model.Remarks isEqualToString:anno.title]) {
+                    index = [self.infoViewDatas indexOfObject:model];
+                    break;
+                }
+            }
+            if (index < self.infoViewDatas.count) {
+               [self.infoViewDatas removeObjectAtIndex:index];
+            }
+            self.infoView.dataArr = self.infoViewDatas;
+            [self.infoView.tableView reloadData];
+        }
+    }
+    
+    [self.mapView addAnnotations:self.calAnnotations];
+    [self.mapView showAnnotations:self.calAnnotations edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+ 
+}
+
+#pragma mark - 初始化地图和开始定位
+- (void)initMapView
+{
+    if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+        NSLog(@"没有权限，引导用户去开启定位");
+        [UIAlertController alertControllerWithTitle:@"请打开定位功能" message:nil okTitle:@"确定" cancelTtile:nil target:self clickBlock:^(BOOL ok, BOOL cancel) {
+            if (ok) {
+                NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+                if ([[UIApplication sharedApplication]canOpenURL:url]) {
+                    [[UIApplication sharedApplication]openURL:url];
+                }
+            }
+        }];
+        return;
+    }
+ 
+    [self locationManager];
+    [self initCompleteBlock];
+    /** 开始定位 */
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:self.completionBlock];
+}
+
+-(AMapLocationManager *)locationManager
+{
+    if (!_locationManager) {
+        _locationManager = [[AMapLocationManager alloc] init];
+        [_locationManager setDelegate:self];
+        [_locationManager setDesiredAccuracy:kCLLocationAccuracyHundredMeters];
+        [_locationManager setPausesLocationUpdatesAutomatically:NO];
+        //    [self.locationManager setAllowsBackgroundLocationUpdates:YES];
+        [_locationManager setLocationTimeout:DefaultLocationTimeout];
+    }
+    return _locationManager;
+}
+
+- (void)initCompleteBlock
+{
+    __weak typeof(self) weakSelf = self;
+    self.completionBlock = ^(CLLocation *location, AMapLocationReGeocode *regeocode, NSError *error)
+    {
+        if (error)
+        {
+            NSLog(@"locError:{%ld - %@};", (long)error.code, error.localizedDescription);
+            if (error.code == AMapLocationErrorLocateFailed)
+            {
+                return;
+            }
+        }
+        //  获取到定位点
+        if (location)
+        {
+            
+            QTAnnotation *annotation = [[QTAnnotation alloc] init];
+            [annotation setCoordinate:location.coordinate];
+            annotation.title = @"您当前的位置为:";
+            [annotation setSubtitle:[NSString stringWithFormat:@"%@", regeocode.formattedAddress]];
+            annotation.imageString = @"icons_header_mine";
+            [weakSelf.mapView addAnnotation:annotation];
+            weakSelf.userAnnotation = annotation;
+            
+            [weakSelf calculateDistancesWithTargetMeter:weakSelf.targetDistance];
+            [weakSelf.mapView addAnnotations:weakSelf.calAnnotations];
+        }
+    };
+    
+}
+
+#pragma mark - 懒加载
+
+-(NSMutableDictionary *)filterDict
+{
+    if (!_filterDict) {
+        _filterDict = [NSMutableDictionary dictionary];
+    }
+    return _filterDict;
+}
+
+-(MAMapView *)mapView
+{
+    if (!_mapView) {
+        _mapView = [[MAMapView alloc] initWithFrame:CGRectMake(0, 64,
+                                                               self.view.bounds.size.width,
+                                                               self.view.bounds.size.height - 64)];
+        
+        _mapView.delegate = self;
+        _mapView.rotateEnabled = NO;
+        _mapView.mapType = MAMapTypeStandard;
+        [_mapView showAnnotations:self.calAnnotations edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+        [self.view addSubview:_mapView];
+    }
+    return _mapView;
+}
+
+-(NSMutableArray *)calAnnotations
+{
+    if (!_calAnnotations) {
+        _calAnnotations = [NSMutableArray array];
+    }
+    return _calAnnotations;
+}
+
+-(NSMutableArray *)geoAnnotations
+{
+    if (!_geoAnnotations) {
+        _geoAnnotations = [NSMutableArray array];
+    }
+    return _geoAnnotations;
+}
+-(NSMutableArray *)infoViewDatas
+{
+    if (!_infoViewDatas) {
+        _infoViewDatas = [NSMutableArray array];
+    }
+    return _infoViewDatas;
+}
+
+-(MapInfoView *)infoView
+{
+    if (!_infoView) {
+        _infoView = [[MapInfoView alloc]initWithFrame:CGRectMake(0, self.view.height - kInfoViewHeight,WIDTH, kInfoViewHeight) dataArr:self.infoViewDatas];
+        _infoView.backgroundColor = [UIColor colorWithRGBHex:0x111111];
+        _infoView.alpha = 0.9;
+        __weak typeof(self) weakSelf = self;
+        _infoView.didSelectIndexBlock = ^(NSInteger index){
+            if (index >= 0 && index < weakSelf.infoViewDatas.count) {
+                MapModel *mm = weakSelf.infoViewDatas[index];
+                for (QTAnnotation *anno in weakSelf.calAnnotations) {
+                    if ([anno.title isEqualToString:mm.Remarks]) {
+                        [weakSelf.mapView selectAnnotation:anno animated:YES];
+                        break;
+                    }
+                }
+            }
+           
+        };
+        // 添加信息View
+        [self.view addSubview:_infoView];
+    
+    }
+    return _infoView;
+}
+
+-(void)setupRightBarBtn
+{
+    UIButton *btn= [UIButton buttonWithTitle:NSLocalizedString(@"Filter", nil) titleFont:13
+                                  titleColor:[UIColor colorWithRGBHex:0xffffff]
+                                      target:self
+                                      action:@selector(rightBarBtnClick:)];
+    btn.frame = CGRectMake(0, 0, 80, 44);
+    btn.titleEdgeInsets = UIEdgeInsetsMake(0, 0, 0, -30);
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btn];
+}
+
+#pragma mark - 筛选
+-(void)rightBarBtnClick:(UIButton *)btn{
+    FilterViewController *vc = [[FilterViewController alloc]init];
+    vc.isNearStock = YES;
+    self.filterDict[kRange] = @(self.targetDistance/1000);
+    vc.filterDict = self.filterDict;
+    vc.billType = 1;
+    __weak typeof(self) weakSelf = self;
+    vc.finishFilterBlock = ^(NSDictionary *dict){
+        weakSelf.filterDict = [dict mutableCopy];
+        NSString *acceptor =  dict[kAcceptor];
+        NSString *DueTimeRange  =  dict[kDueTimeRange];
+        weakSelf.targetDistance  =  [dict[kRange] floatValue] * 1000;
+        NSLog(@"筛选条件：%@ - %@ - %lf",acceptor,DueTimeRange,weakSelf.targetDistance);
+        [weakSelf.infoViewDatas removeAllObjects];
+        [weakSelf.infoView.tableView reloadData];
+        [weakSelf loadData];
+    };
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+#pragma mark - MAMapViewDelegate
+/***  根据anntation生成对应的View */
+- (MAAnnotationView *)mapView:(MAMapView *)mapView viewForAnnotation:(id<MAAnnotation>)annotation
+{
+     self.infoView.hidden = (self.calAnnotations.count == 0 );
+    static NSString *customReuseIndetifier = @"customReuseIndetifier";
+    MAAnnotationView *annotationView = [mapView dequeueReusableAnnotationViewWithIdentifier:customReuseIndetifier];
+    if (annotationView == nil)
+    {
+        annotationView = [[MAAnnotationView alloc]initWithAnnotation:annotation
+                                        reuseIdentifier:customReuseIndetifier];
+        annotationView.calloutOffset = CGPointMake(0, -5);
+        annotationView.canShowCallout = YES;       //设置气泡可以弹出，默认为NO
+        annotationView.draggable = YES;        //设置标注可以拖动，默认为NO
+    }
+    
+    //    这里我们遍历数组 拿到point 与地图上annotation上title比较  相同的话  设置图片为模拟数据的image
+    for (QTAnnotation *point in self.calAnnotations) {
+        if ([[annotation title] isEqualToString:point.title]) {
+            annotationView.image = [UIImage imageNamed:point.imageString];
+            annotationView.rightCalloutAccessoryView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"details"]];
+        }
+    }
+    
+    if (annotation == self.userAnnotation ) {
+        annotationView.rightCalloutAccessoryView = nil;
+        annotationView.image = [UIImage imageNamed:self.userAnnotation.imageString];
+    }
+ 
+    /** 选择第一个 */
+    MapModel *model = self.infoViewDatas.firstObject;
+    for (QTAnnotation *anno in self.calAnnotations) {
+        if (model == anno.mapModel) {
+            [self.mapView selectAnnotation:anno animated:YES];
+            break;
+        }
+    }
+    
+    return annotationView;
+}
+
+#pragma mark - 点击大头针
+-(void)mapView:(MAMapView *)mapView didSelectAnnotationView:(MAAnnotationView *)view
+{
+    if ([[view.annotation title] isEqualToString:self.userAnnotation.title]) {
+        return;
+    }
+    if ([view.annotation isKindOfClass:[QTAnnotation class]]) {
+        NSInteger index = self.infoViewDatas.count + 1;
+        for (MapModel *mm in self.infoViewDatas) {
+            if ([mm.Remarks isEqualToString:[view.annotation title]]) {
+                index = [self.infoViewDatas indexOfObject:mm];
+                break;
+            }
+        }
+     
+        [self.infoView returnSelectedIndex:index];
+    }
+}
+
+/** 点击弹出框 进行跳转 */
+- (void)mapView:(MAMapView *)mapView didAnnotationViewCalloutTapped:(MAAnnotationView *)view
+{
+    if (view.annotation == self.userAnnotation) {
+        return;
+    }
+    
+    if ([view.annotation isKindOfClass:[QTAnnotation class]]) {
+        QTAnnotation *anno = (QTAnnotation *)view.annotation;
+        KLineViewController *vc = [[KLineViewController alloc]init];
+        vc.kLineType = KLine_nearStock;
+        [vc.kLineViewModel setCurrentModel:anno.mapModel type:KLine_nearStock];
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+   
+}
+
+-(void)dealloc{
+    NSLog(@"%s",__func__);
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    [self.calAnnotations removeAllObjects];
+    [self.geoAnnotations removeAllObjects];
+    [self.infoViewDatas removeAllObjects];
+    [self clearData];
+    
+}
+
+@end

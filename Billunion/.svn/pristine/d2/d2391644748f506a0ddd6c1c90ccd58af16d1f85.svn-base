@@ -1,0 +1,70 @@
+//
+//  BaseViewController.h
+//  PCStock
+//
+//  Created by Waki on 2016/12/28.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@class StockView;
+
+typedef enum {
+   stock_market, //票据行情
+   stock_trading, //票据交易
+   stock_assets,  //票据资产
+   stock_transactionRecords, //交易记录
+   stock_buying,  //我的买入
+   stock_sell  //我的卖出
+  
+}STOCK_TYPE;
+
+@interface BaseViewController : UIViewController
+
+@property (assign, nonatomic) STOCK_TYPE stockType;
+@property (nonatomic,assign) NSInteger segmentSelectIndex;
+
+- (void)backClick;
+- (void)setupBakcButton;
+
+
+- (void)layoutMainSelectViweWithTitles:(NSArray *)titles;
+- (void)layoutSelectViweWithTitles:(NSArray *)titles;
+
+- (void)layoutScrollViewWithSubTitles:(NSArray *)subTitles;
+
+/**
+ 得到当前滚动到主页面的 StockView
+
+ @return  StockView
+ */
+- (UIView *)getCurrentStockView;
+
+
+
+/**
+ 得到当前 scrollView 上指定的StockView
+
+ @param index    scrollView的page
+ @return    StockView
+ */
+- (UIView *)getStockViewWithIndex:(NSInteger)index;
+
+
+/**
+ 点击 segment时调用的方法
+
+ @param page  segment选择的页面
+ */
+- (void)mainSelectedWithPage:(NSInteger)page;
+
+/**
+ 点击 title下二级按钮时时调用的方法
+
+ @param page scrollView滚动到的页面
+ */
+- (void)subSelectedWithPage:(NSInteger)page;
+
+
+@end

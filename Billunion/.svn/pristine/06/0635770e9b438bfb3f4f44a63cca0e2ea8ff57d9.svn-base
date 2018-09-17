@@ -1,0 +1,23 @@
+//
+//  StockSelectViewController.h
+//  Billunion
+//
+//  Created by Waki on 2017/2/15.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "BaseViewController.h"
+
+typedef void(^SelectFinish)(NSInteger tradeMode, NSInteger isAnonymous,NSArray *billRecords);
+@interface StockSelectViewController : BaseViewController
+
+@property (nonatomic, strong) NSArray *dataArray;
+
+@property (nonatomic, assign) BOOL isOfferSell;
+
+@property (nonatomic ,copy) SelectFinish selectFinish;
+
+@end
+
+

@@ -1,0 +1,428 @@
+
+//
+//  StockModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/17.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "StockModel.h"
+
+@implementation StockModel
+
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _keyValues = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+- (void)setStockType:(StockAllType)stockType{
+    _stockType = stockType;
+    switch (stockType) {
+        case StockAllType_Seller_Market:
+             [self loadSellerMarketDatas];
+            break;
+            
+        case StockAllType_Buyer_Market:
+             [self loadBuyerMarketDatas];
+             break;
+            
+        case StockAllType_Tade_askSell:
+             [self loadTadeAskSell];
+             break;
+            
+        case StockAllType_Assets:
+             [self loadAssetsDatas];
+             break;
+            
+        case StockAllType_MyBuying_askBuying:
+        case StockAllType_MyBuying_specifiedBuying:
+        case StockAllType_MyBuying_quoteBuying:
+        case StockAllType_MyBuying_beSpecifiedSell:
+             [self loadMyBuyDatas:stockType];
+              break;
+            
+        case StockAllType_MySell_askSell:
+        case StockAllType_MySell_specifiedSell:
+        case StockAllType_MySell_quoteSell:
+        case StockAllType_MySell_beSpecifiedBuying:
+            [self loadMySellDatas:stockType];
+            break;
+            
+        case StockAllType_Select_Trade:
+             [self loadSelectToTradeDatas];
+             break;
+            
+        case StockAllType_TradingRecord_Seller_Market:
+        case StockAllType_TradingRecord_Buyer_Market:
+            [self loadTradeRecords:stockType];
+            break;
+            
+        case StockAllType_BillDetail:
+             [self loadBillDetailDatas];
+             break;
+        default:
+            break;
+    }
+}
+
+//卖方市场
+- (void)loadSellerMarketDatas{
+    NSArray *keyArray;
+    if (self.BillType) {
+        if ([self.BillType intValue] == 1) {
+            keyArray =@[@"Amount",@"DiscountRate",@"BP",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"OfferName",@"Holder",@"Address",@"haveContract"];
+        }else{
+           keyArray =@[@"Amount",@"DiscountRate",@"BP",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"OfferName",@"Holder",@"haveContract"];
+        }
+    }
+    [self setDataInKeyValues:keyArray];
+}
+
+//买方市场
+- (void)loadBuyerMarketDatas{
+     NSArray *keyArray;
+    if (self.BillType) {
+        if ([self.BillType intValue] == 1) {
+            keyArray  =@[@"Amount",@"DiscountRate",@"BP",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"OfferName",@"Address",@"DeliveryTime",@"needContract",@"aimCustomer"];
+        }else{
+            keyArray =@[@"Amount",@"DiscountRate",@"BP",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"OfferName",@"DeliveryTime",@"needContract",@"aimCustomer"];
+        }
+    }
+    [self setDataInKeyValues:keyArray];
+}
+
+
+- (void)loadTadeAskSell{
+    NSArray *keyArray;
+    if (self.BillType) {
+        if ([self.BillType intValue] == 1) {
+            keyArray =@[@"Amount",@"AcceptorIdentityType",@"BillType",@"DueTimeRange",@"DueTime",@"Holder",@"BillState",@"Address"];
+        }else{
+            keyArray =@[@"Amount",@"AcceptorIdentityType",@"BillType",@"DueTimeRange",@"DueTime",@"Holder",@"BillState"];
+        }
+    }
+    [self setDataInKeyValues:keyArray];
+}
+
+//票据资产
+- (void)loadAssetsDatas{
+    NSArray *keyArray;
+    if (self.BillType) {
+        if ([self.BillType intValue] == 1) {
+            keyArray =@[@"Amount",@"AcceptorIdentityType",@"BillType",@"DueTimeRange",@"DueTime",@"Holder",@"BillState",@"Address"];
+        }else{
+            keyArray =@[@"Amount",@"AcceptorIdentityType",@"BillType",@"DueTimeRange",@"DueTime",@"Holder",@"BillState"];
+        }
+    }
+    [self setDataInKeyValues:keyArray];
+}
+
+//买 卖方的交易的票据信息
+- (void)loadBillDetailDatas{
+    NSArray *keyArray;
+    if ([self.BillType intValue] == 1) {
+        keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"DueTime",@"Address"];
+    }else{
+        keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"DueTime"];
+    }
+     [self setDataInKeyValues:keyArray];
+}
+
+//我的买入
+- (void)loadMyBuyDatas:(StockAllType)stockType{
+    NSArray *keyArray;
+    if (self.BillType) {
+        NSString *specifiedTradeName;
+        if (self.stockType == StockAllType_MyBuying_specifiedBuying) {
+            specifiedTradeName = @"CounterPartyName";
+        }else{
+            specifiedTradeName = @"CompanyName";
+        }
+
+        if (stockType == StockAllType_MyBuying_askBuying) {
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"needContract",@"aimCustomer"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"needContract",@"aimCustomer"];
+            }
+        }else if (stockType == StockAllType_MyBuying_specifiedBuying){
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"needContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"needContract"];
+            }
+        }else if(stockType == StockAllType_MyBuying_quoteBuying){
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",@"haveContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"haveContract"];
+            }
+        }else{
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"haveContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"haveContract"];
+            }
+
+        }
+        
+      
+    }
+     [self setDataInKeyValues:keyArray];
+}
+
+
+//我的卖出
+- (void)loadMySellDatas:(StockAllType)stockType{
+    NSArray *keyArray;
+    
+    NSString *specifiedTradeName;
+    if (self.stockType == StockAllType_MySell_specifiedSell) {
+        specifiedTradeName = @"CounterPartyName";
+    }else{
+        specifiedTradeName = @"CompanyName";
+    }
+    switch (stockType) {
+        case StockAllType_MySell_askSell:
+        {
+            // 询价卖出
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"haveContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"haveContract"];
+            }
+         break;
+        }
+        case StockAllType_MySell_specifiedSell:
+        {
+            //指定卖出
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"haveContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"haveContract"];
+            }
+            break;
+        }
+        case StockAllType_MySell_quoteSell:
+        {
+            // 报价卖出
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                           @"needContract",@"aimCustomer"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"needContract",@"aimCustomer"];
+            }
+            break;
+        }
+        case StockAllType_MySell_beSpecifiedBuying:
+        {
+            // 被指定买入
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"Address",
+                            specifiedTradeName,@"needContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",
+                            @"DueTimeRange",@"TradeStatus",@"ExamineState",@"needContract"];
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    
+    [self setDataInKeyValues:keyArray];
+}
+
+//指定卖出选择成交
+- (void)loadSelectToTradeDatas{
+    NSArray *keyArray = @[@"Amount",@"DiscountRate",@"BillType",@"AcceptorIdentityType",@"DueTimeRange",@"Holder",@"TradeStatus",@"Address"];
+    [self setDataInKeyValues:keyArray];
+}
+
+// 交易记录
+- (void)loadTradeRecords:(StockAllType)stockType{
+    NSArray *keyArray;
+ 
+        if (self.BillType && stockType == StockAllType_TradingRecord_Seller_Market ) {
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"Acceptor",@"DueTimeRange",@"Contacts",@"Holder",@"TradeResult",@"Address",@"TradeRole",@"haveContract"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"Acceptor",@"DueTimeRange",@"Contacts",@"Holder",@"TradeResult",@"TradeRole",@"haveContract"];
+            }
+        }
+    
+        if (self.BillType && stockType == StockAllType_TradingRecord_Buyer_Market ) {
+            if ([self.BillType intValue] == 1) {
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"Acceptor",@"DueTimeRange",@"Contacts",@"Holder",@"TradeResult",@"Address",@"TradeRole",@"needContract",@"aimCustomer"];
+            }else{
+                keyArray =@[@"Amount",@"DiscountRate",@"BillType",@"Acceptor",@"DueTimeRange",@"Contacts",@"Holder",@"TradeResult",@"TradeRole",@"needContract",@"aimCustomer"];
+            }
+        }
+    
+    
+    [self setDataInKeyValues:keyArray];
+}
+
+- (void)setDataInKeyValues:(NSArray *)keyArray{
+    for (int i = 0; i < keyArray.count; i++ ) {
+        self.keyValues[@(i)] = [self changeStringPropertyName:keyArray[i] model:self];
+    }
+}
+
+- (NSString *)changeStringPropertyName:(NSString *)propertyName model:(id)model{
+    id value = [model valueForKey:propertyName];
+
+    
+    if ([propertyName isEqualToString:@"AcceptorIdentityType"]) {
+        value =  [self getAcceptor];
+    }
+    
+    if ([propertyName isEqualToString:@"HolderIdentityType"]) {
+        value = [self getHolder];
+    }
+    
+    if ([propertyName isEqualToString:@"TradeStatus"]) {
+        value = [Tools getTradeStatus:[[model valueForKey:@"TradeStatus"] intValue]];
+    } else if([propertyName isEqualToString:@"TradeResult"]) {
+      value = [Tools getTradeStatus:[[model valueForKey:@"TradeResult"] intValue]];
+    }
+    
+    if ([propertyName isEqualToString:@"TradeState"]) {
+        value = [Tools getTradeStatus:[[model valueForKey:@"TradeState"] intValue]];
+    }
+
+    
+    if ([propertyName isEqualToString:@"BillState"]) {
+        value = [Tools getBillState:[[model valueForKey:@"BillState"] intValue]];
+    }
+    
+    if ([propertyName isEqualToString:@"BillType"]) {
+        value =  [Tools getBillType:[[model valueForKey:@"BillType"] intValue]];
+    }
+    
+    if ([propertyName isEqualToString:@"DiscountRate"] && value) {
+        value = [NSString stringWithFormat:@"%.2f",[value floatValue]];
+    }
+    if ([propertyName isEqualToString:@"Amount"]) {
+        value = [NSString stringWithFormat:@"%.2f",[[model valueForKey:@"Amount"] floatValue]/10000];
+    }
+    
+    if ([propertyName isEqualToString:@"DueTimeRange"]) {
+        value = [self getBillDueTimeRange];
+    }
+    
+    if ([propertyName isEqualToString:@"ExamineState"]) {
+        value = [Tools getExamineState:self.ExamineState.integerValue];
+    }
+    
+    if ([propertyName isEqualToString:@"Holder"]) {
+        value = self.Holder;
+    }
+
+    
+    if ([propertyName isEqualToString:@"TradeRole"]) {
+        value = [self getTradeRole:self.TradeRole];
+    }
+    
+    if ([propertyName isEqualToString:@"needContract"]) {
+        
+    }
+    
+    if (!value) {
+        value  = @"-";
+    }
+    return value;
+}
+
+- (NSString *)getBillDueTimeRange{
+    if ([self.BillType intValue] == 1) {  //纸票
+       return  [Tools getPNoteDueTimeString:[self.DueTimeRange integerValue]];
+    }else{ //电票
+        return [Tools getENoteDueTimeString:[self.DueTimeRange integerValue]];
+    }
+}
+// 1询价买入 3指定买入 5报价买入 8被指定卖出  2询价卖出  4指定卖出  6报价卖出  7被指定买入
+-(NSString *)getTradeRole:(NSNumber*)tradeRole{
+    NSArray *arr = @[@"询价买入",@"询价卖出",@"指定买入",@"指定卖出",@"报价买入",@"报价卖出",@"被指定买入",@"被指定卖出"];
+    if (tradeRole.integerValue > 0 && tradeRole.integerValue <= 8) {
+        return arr[tradeRole.integerValue - 1];
+    }
+    return @"";
+}
+
+- (NSString *)getAcceptor{
+    NSString *acceptor;
+    // 承兑人大类型 银行／非银行
+    if ([self.AcceptorIdentityType intValue] == 1) {
+        acceptor =[Tools getAcceptor1:[self.AcceptorType integerValue]];
+        self.Acceptor = acceptor;
+    }else if([self.AcceptorIdentityType intValue]  == 2){
+        acceptor =[Tools getAcceptor2:[self.AcceptorType integerValue]];
+        self.Acceptor = acceptor;
+    }
+    return acceptor;
+}
+
+- (NSString *)getHolder{
+    //持票人类型
+    NSString *holder;
+    if ([self.HolderIdentityType intValue] == 1) {
+        holder =[Tools getAcceptor1:[self.HolderType intValue]];
+        self.Holder = holder;
+    }else if ([self.HolderIdentityType intValue] == 2) {
+        holder =[Tools getAcceptor2:[self.HolderType intValue]];
+        self.Holder = holder;
+    }
+    //买方市场的情况下，持票人为 “-”
+    if (self.stockType == StockAllType_Buyer_Market ) {
+        return nil;
+    }
+    return holder;
+}
+
+//写入需要显示的编号
+- (NSString *)getStockCodeWithRow:(NSInteger)row{
+    if (_stockType == StockAllType_Assets ||
+        _stockType == StockAllType_Tade_askSell ||
+        _stockType == StockAllType_Select_Trade ||
+        _stockType == StockAllType_BillDetail) {
+        return  [NSString stringWithFormat:@"%@", self.BillNum];
+    }else if(_stockType>0 && _stockType < 9){
+        return [NSString stringWithFormat:@"%ld",row+1];
+    }else {
+        NSString *ProductCode=  self.ProductCode;
+        if (ProductCode.length > 10) {
+            ProductCode = [ProductCode substringToIndex:10];
+        }
+        return ProductCode;
+    }
+}
+
+@end

@@ -1,0 +1,83 @@
+//
+//  Config.m
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import "Config.h"
+
+
+NSString * const TRADE_NOTIFICATION = @"TradeNotification";
+
+
+NSString * const DISCOUNTRATE_ERROR = @"贴现率输入格式不正确";
+
+NSString * const DISCOUNTRATE_NONE = @"个别票据还没有赋予贴现率!";
+
+NSString * const IS_DELETE_ADDRESS = @"确认要删除以下地址？";
+
+NSString * const SURE_DEL = @"确认删除";
+
+NSString * const CANCEL_DEL = @"放弃操作";
+
+NSString * const ADD_NEW_ADDRESS = @"新增地址";
+
+NSString * const NO_MORE_PASS_STOCK  = @"无符合交易要求的票据";
+
+NSString * const ABOUT_US_INFO = @"    广州普惠创新金融信息服务有限公司性质是属于“其它金融业”的金融科技服务型企业，致力于建立基于互联网与金融专线的统一互联的中国金融场外交易基础设施，以推动利率市场化为目标。\n     生产系统主要包括管理信息系统、报价系统、竞价系统、撮合系统、登记系统、资金调拨信息系统，资金汇划信息系统和清算报文生成系统等，第一期目标为构建中国普创票联。";
+
+NSString * const INPUT_YOUR_OPINION = @"请输入您的意见。。。。";
+
+NSString * const CANT_TRADE_YOURSELF =  @"不能与自己进行交易哦！";
+NSString * const CANT_REPEAT_BUY = @"不能重复进行买入！";
+NSString * const NONE_OFFER =  @"您还没有进行报价哦！";
+NSString * const IS_CANCEL_OFFER = @"确定需要执行撤销报价操作？";
+NSString * const UPLOADING = @"正在上传中...";
+
+NSString * const ERROR_STOCK_NUM = @"票据号不正确";
+NSString * const ERROR_STOCK_ACCEPTOR = @"请填写正确的承兑人";
+NSString * const ERROR_STOCK_AMOUNT = @"票面金额不正确";
+NSString * const ERROR_STOCK_DATE = @"请选择票据日期";
+NSString * const ERROR_STOCK_ADDRESS = @"请选择票据地址";
+NSString * const ERROR_STOCK_FRONT_IMAGE = @"请选择正面截图";
+NSString * const ERROR_STOCK_BACK_IMAGE = @"请选择背面截图";
+NSString * const ERROR_CANT_USE_CAMERA = @"相机不可用";
+NSString * const ERROR_PLEASE_SELECT = @"请选择";
+NSString * const ERROR_OPEN_CAMERA = @"请打开照相机,才能拍照";
+NSString * const ERROR_OUT_RANGE = @"指定的票源范围不正确";
+NSString * const ERROR_STOCK_CANT_DELETE = @"票据已发布,不能删除！";
+
+NSString * const DELETE_OK = @"删除成功";
+NSString * const DELETE_FAIL = @"删除失败";
+NSString *const  QUOTE_OK = @"报价成功";
+NSString *const  QUOTE_FAIL = @"报价失败";
+NSString *const  QUOTE_RESET_OK = @"修改报价成功";
+NSString *const  QUOTE_RESET_FAIL = @"修改报价失败";
+NSString *const UNDO_OK = @"撤销成功";
+NSString *const UNDO_FAIL = @"撤销失败";
+
+NSString * const ADD_OK = @"添加成功";
+NSString * const ADD_FAIL = @"添加失败";
+NSString * const SUBMIT_OK = @"提交成功!";
+NSString * const SUBMIT_FAIL = @"提交失败，请重试！";
+NSString * const TRADE_OK = @"成交成功" ;
+NSString * const TRADE_FAIL = @"成交失败";
+NSString * const ERROR_VERIFY = @"客官稍等，验证码正在路上";
+
+NSString * const ERROR_NETWORK = @"网络出错";
+NSString * const ERROR_GET_DATA_OK =  @"获取成功";
+NSString * const ERROR_GET_DATA_FAIL =  @"获取数据失败";
+NSString * const NO_MORE_DATA = @"没有更多数据!";
+NSString * const ERROR_DATA = @"数据出错";
+
+NSString * const ERROR_PHONE_NUM = @"请输入正确的手机号码!";
+NSString * const ERROR_VERIFY_CODE = @"验证码不能为空!";
+NSString * const ERROR_PWD_NONE = @"密码不能为空!";
+NSString * const ERROR_PWD_NOT_SAME = @"密码不一致!";
+NSString * const ERROR_PWD_RESET_FAIL = @"密码更改不成功";
+
+@implementation Config
+
+@end

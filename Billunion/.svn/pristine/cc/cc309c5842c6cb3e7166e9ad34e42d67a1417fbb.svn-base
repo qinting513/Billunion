@@ -1,0 +1,482 @@
+//
+//  MapViewController.m
+//  Billunion
+//
+//  Created by QT on 17/1/9.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "MapViewController.h"
+#import "QTAnnotation.h"
+#import "MapInfoView.h"
+
+#import <MAMapKit/MAMapKit.h>
+#import <AMapFoundationKit/AMapFoundationKit.h>
+#import <AMapLocationKit/AMapLocationKit.h>
+#import <AMapNaviKit/AMapNaviKit.h>
+#import <CoreLocation/CoreLocation.h>
+
+#import "StockModel.h"
+#import "OfferModel.h"
+#import "BuyerDetailModel.h"
+#import "BuyerInfoViewController.h"
+
+#define DefaultLocationTimeout  6
+#define kInfoViewHeight 129
+#define kMargin  STRealX(35)
+
+
+@interface MapViewController ()<MAMapViewDelegate, AMapLocationManagerDelegate,
+AMapNaviDriveManagerDelegate,AMapNaviDriveViewDelegate>
+
+@property (nonatomic, strong) MAMapView *mapView;
+/** 定位 */
+@property (nonatomic, strong) AMapLocationManager *locationManager;
+@property (nonatomic, copy) AMapLocatingCompletionBlock completionBlock;
+/** 导航管理器 */
+@property (nonatomic, strong) AMapNaviDriveManager *driveManager;
+
+/** 用户的位置点 */
+@property (nonatomic,strong) QTAnnotation *userAnnotation;
+/** 目标位置点 */
+@property (nonatomic,strong) QTAnnotation *destinationAnnotation;
+
+@property (nonatomic,strong) MapInfoView *infoView;
+@property (nonatomic,strong) UIView *distanceView;
+
+/** 目的地 */
+@property (nonatomic,strong)AMapNaviRoute *destinationRoute;
+
+/** 存储 地图上所有的点 */
+@property (nonatomic,strong) NSMutableArray *annotations;
+
+/** 存储所有的模型，用于infoView的显示 */
+@property (nonatomic,strong)  NSMutableArray  *locations;
+@end
+
+@implementation MapViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [AMapServices sharedServices].apiKey = @"621bd5612c3b7735fd771f2152619a09";
+    [self setupBakcButton];
+    self.title = @"票源距离";
+    [self initMapView];
+    [self loadData];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear: animated];
+    [self.locationManager setDelegate:self];
+    [self.mapView setDelegate:self];
+    [self.driveManager setDelegate:self];
+    [self.mapView showAnnotations:self.annotations edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+    [self.mapView addAnnotation:self.userAnnotation];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self.locationManager stopUpdatingLocation];
+    [self.driveManager stopNavi];
+    [self.locationManager setDelegate:nil];
+    [self.driveManager setDelegate:nil];
+    [self.mapView setDelegate:nil];
+}
+
+
+-(void)loadData{
+    
+    for (int i=0; i<self.dataArray.count; i++) {
+        [self geoCodeWithMapModel:self.dataArray[i]];
+    }
+}
+
+#pragma mark - 初始化地图和开始定位
+- (void)initMapView
+{
+    if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+        [UIAlertController alertControllerWithTitle:@"提示" message:@"请打开定位功能,否则地图使用不了" okTitle:@"确定" cancelTtile:@"取消" target:self clickBlock:^(BOOL ok, BOOL cancel) {
+            if (ok) {
+                NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+                if ([[UIApplication sharedApplication]canOpenURL:url]) {
+                    [[UIApplication sharedApplication]openURL:url];
+                }
+            }
+        }];
+        return;
+    }
+    [self initCompleteBlock];
+    [self locationManager];
+    [self initDriveManager];
+    //    /** 开始定位 */
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:self.completionBlock];
+    
+}
+
+-(AMapLocationManager *)locationManager
+{
+    if (!_locationManager) {
+        _locationManager = [[AMapLocationManager alloc] init];
+        [_locationManager setDesiredAccuracy:kCLLocationAccuracyHundredMeters];
+        [_locationManager setPausesLocationUpdatesAutomatically:NO];
+        [_locationManager setLocationTimeout:DefaultLocationTimeout];
+    }
+    return _locationManager;
+}
+
+-(MAMapView *)mapView
+{
+    if (!_mapView) {
+        _mapView = [[MAMapView alloc] initWithFrame:CGRectMake(0, 64,
+                                                               self.view.bounds.size.width,
+                                                               self.view.bounds.size.height - 64)];
+        
+        [_mapView setDelegate:self];
+        _mapView.rotateEnabled = NO;
+        _mapView.mapType = MAMapTypeStandard;
+        [_mapView showAnnotations:self.annotations edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+        [self.view addSubview:_mapView];
+    }
+    return _mapView;
+}
+
+-(NSMutableArray *)annotations
+{
+    if (!_annotations) {
+        _annotations = [NSMutableArray array];
+    }
+    return _annotations;
+}
+-(NSMutableArray *)locations
+{
+    if (!_locations) {
+        _locations = [NSMutableArray array];
+    }
+    return _locations;
+}
+
+- (void)initCompleteBlock
+{
+    __weak MapViewController *weakSelf = self;
+    self.completionBlock = ^(CLLocation *location, AMapLocationReGeocode *regeocode, NSError *error)
+    {
+        if (error)
+        {
+            NSLog(@"locError:{%ld - %@};", (long)error.code, error.localizedDescription);
+            if (error.code == AMapLocationErrorLocateFailed)
+            {
+                return;
+            }
+        }
+        //  获取到定位点
+        if (location)
+        {
+            NSLog(@"定位结果==== %@",regeocode);
+            QTAnnotation *annotation = [[QTAnnotation alloc] init];
+            [annotation setCoordinate:location.coordinate];
+            [annotation setTitle:@"您当前位于:"];
+            [annotation setSubtitle:[NSString stringWithFormat:@"%@", regeocode.formattedAddress]];
+            annotation.imageString = @"icons_header_mine";
+            weakSelf.userAnnotation = annotation;
+            [weakSelf.mapView addAnnotation:annotation];
+            [weakSelf.mapView showAnnotations:weakSelf.mapView.annotations  animated:YES];
+            /** 计算路线 */
+            [weakSelf calculateRouteWithUserAnnotation:annotation destinationAnnotation:weakSelf.destinationAnnotation];
+        }
+    };
+    
+}
+
+
+-(void)calculateRouteWithUserAnnotation:(QTAnnotation *)userAnnotation destinationAnnotation:(QTAnnotation *)destinationAnnotation
+{
+    [self.mapView selectAnnotation:self.destinationAnnotation animated:YES];
+    AMapNaviPoint *startPoint = [AMapNaviPoint locationWithLatitude:userAnnotation.coordinate.latitude
+                                                          longitude:userAnnotation.coordinate.longitude];
+    AMapNaviPoint *endPoint   = [AMapNaviPoint locationWithLatitude:destinationAnnotation.coordinate.latitude
+                                                          longitude:destinationAnnotation.coordinate.longitude];
+    
+    // 开始计算路径  成功的话则去调用代理方法
+    [self.driveManager calculateDriveRouteWithStartPoints:@[startPoint]
+                                                endPoints:@[endPoint]
+                                                wayPoints:nil
+                                          drivingStrategy:AMapNaviDrivingStrategySinglePrioritiseDistance];
+    // 进行缩放
+    [self.mapView showAnnotations:self.annotations edgePadding:UIEdgeInsetsMake(50,20,150,20) animated:YES];
+}
+
+
+- (void)initDriveManager
+{
+    if (self.driveManager == nil)
+    {
+        self.driveManager = [[AMapNaviDriveManager alloc] init];
+        [self.driveManager setDelegate:self];
+    }
+}
+
+
+#pragma mark - MAMapViewDelegate
+/***  根据anntation生成对应的View */
+- (MAAnnotationView *)mapView:(MAMapView *)mapView viewForAnnotation:(id<MAAnnotation>)annotation
+{
+    
+    static NSString *customReuseIndetifier = @"customReuseIndetifier";
+    MAAnnotationView *annotationView = [mapView dequeueReusableAnnotationViewWithIdentifier:customReuseIndetifier];
+    if (annotationView ==nil)
+    {
+        
+        annotationView = [[MAAnnotationView alloc]initWithAnnotation:annotation reuseIdentifier:customReuseIndetifier];
+        annotationView.calloutOffset = CGPointMake(0, -5);
+        annotationView.canShowCallout = YES;       //设置气泡可以弹出，默认为NO
+        annotationView.draggable = YES;        //设置标注可以拖动，默认为N
+    }
+    
+    //    这里我们遍历数组 拿到point 与地图上annotation上title比较  相同的话  设置图片为模拟数据的image
+    for (QTAnnotation *point in self.annotations) {
+        if ([[annotation title] isEqualToString:point.title]) {
+            annotationView.image = [UIImage imageNamed:point.imageString];
+        }
+    }
+    if (annotation == self.userAnnotation) {
+        annotationView.image = [UIImage imageNamed:self.userAnnotation.imageString];
+        [self.mapView selectAnnotation:self.destinationAnnotation animated:YES];
+    }
+    
+    return annotationView;
+}
+
+
+#pragma mark - 点击大头针
+
+-(void)mapView:(MAMapView *)mapView didSelectAnnotationView:(MAAnnotationView *)view
+{
+    if ([[view.annotation title] isEqualToString:self.userAnnotation.title]) {
+        return;
+    }
+    
+    if ([view.annotation isKindOfClass:[QTAnnotation class]]) {
+        self.destinationAnnotation = (QTAnnotation *)view.annotation;
+        [self calculateRouteWithUserAnnotation:self.userAnnotation destinationAnnotation:self.destinationAnnotation];
+        NSInteger index = self.locations.count + 1;
+        for (MapModel *mm in self.locations) {
+            if ([mm.Remarks isEqualToString:self.destinationAnnotation.title]) {
+                index = [self.locations indexOfObject:mm];
+                break;
+            }
+        }
+        [self.infoView returnSelectedIndex:index];
+    }
+}
+
+#pragma mark - AMapNaviDriveManagerDelegate
+/** 当驾车路线规划成功时，会进 driveManagerOnCalculateRouteSuccess 回调，在该回调函数中，可以进行规划路线显示也可以直接开启导航 */
+- (void)driveManagerOnCalculateRouteSuccess:(AMapNaviDriveManager *)driveManager
+{
+    // NSLog(@"onCalculateRouteSuccess:%@",driveManager.naviRoutes);
+    [self showNaviRoutes];
+}
+#pragma mark -  绘制路线
+- (void)showNaviRoutes
+{
+    if ([self.driveManager.naviRoutes count] <= 0)
+    {
+        return;
+    }
+    
+    [self.mapView removeOverlays:self.mapView.overlays];
+    
+    //将路径显示到地图上
+    for (NSNumber *aRouteID in [self.driveManager.naviRoutes allKeys])
+    {
+        AMapNaviRoute *aRoute = [[self.driveManager naviRoutes] objectForKey:aRouteID];
+        self.destinationRoute = aRoute;
+        int count = (int)[[aRoute routeCoordinates] count];
+        NSLog(@"当前导航路径的信息: 长度：%ld-- 时间: %ld",aRoute.routeLength,aRoute.routeTime);
+        
+        //添加路径Polyline
+        CLLocationCoordinate2D coords[count];
+        
+        for (int i = 0; i < count; i++)
+        {
+            AMapNaviPoint *coordinate = [[aRoute routeCoordinates] objectAtIndex:i];
+            coords[i].latitude = [coordinate latitude];
+            coords[i].longitude = [coordinate longitude];
+        }
+        
+        MAPolyline *polyline = [MAPolyline polylineWithCoordinates:coords count:count];
+        [self.mapView addOverlay:polyline];
+    }
+    [_mapView showAnnotations:self.annotations edgePadding:UIEdgeInsetsMake(50,20,150,20)animated:YES];
+    
+    /** 路程View */
+    self.distanceView.origin = CGPointMake(self.view.centerX + 20, self.view.centerY + 20);
+    [self.view addSubview:self.distanceView];
+    NSString *dis = [NSString stringWithFormat:@"全程共: %.1lfkm",self.destinationRoute.routeLength/1000.0];
+    NSString *hour = [NSString stringWithFormat:@"预计时间:%.1lfh",self.destinationRoute.routeTime/3600.0];
+    [self setDistanceViewWithDistance:dis hour:hour];
+}
+
+// 渲染路径
+- (MAOverlayRenderer *)mapView:(MAMapView *)mapView rendererForOverlay:(id <MAOverlay>)overlay
+{
+    
+    if ([overlay isKindOfClass:[MAPolyline class]])
+    {
+        MAPolylineRenderer *polylineRenderer = [[MAPolylineRenderer alloc] initWithPolyline:(MAPolyline*)overlay];
+        polylineRenderer.strokeColor = [UIColor redColor];
+        polylineRenderer.lineWidth   = 3.0f;
+        polylineRenderer.lineJoinType = kMALineJoinRound;//连接类型
+        return polylineRenderer;
+    }
+    
+    return nil;
+    
+}
+
+
+
+#pragma mark - 地理编码(地址关键字 ->经纬度 )
+- (void)geoCodeWithMapModel:(MapModel*)mapModel {
+
+    // 容错处理
+    if([mapModel.Remarks length] == 0)
+    {
+        return;
+    }
+    CLGeocoder *cLGeocoder = [[CLGeocoder alloc] init];
+    // 根据地址关键字, 进行地理编码
+    __weak typeof(self) weakSelf = self;
+    [cLGeocoder geocodeAddressString:mapModel.Remarks completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+        
+        CLPlacemark *pl = [placemarks firstObject];
+        
+        if(error == nil)
+        {
+            // NSLog(@" %f----%f -- %@", pl.location.coordinate.latitude, pl.location.coordinate.longitude,[NSThread currentThread]);
+            QTAnnotation *annotation = [[QTAnnotation alloc] init];
+            [annotation setCoordinate:pl.location.coordinate];
+            [annotation setTitle:mapModel.Remarks];
+            annotation.imageString = @"icons_header_other";
+            annotation.mapModel = mapModel;
+            annotation.subtitle = [NSString stringWithFormat:@"金额(万):%.2f  贴现率:%.2f%%",
+                                   mapModel.Amount.floatValue/10000.0,mapModel.DiscountRate.floatValue];
+            [weakSelf.annotations addObject:annotation];
+            [weakSelf.mapView addAnnotation:annotation];
+            [weakSelf.mapView showAnnotations:weakSelf.annotations edgePadding:UIEdgeInsetsMake(50,20,150,20) animated:YES];
+            
+            
+            [weakSelf.locations addObject:mapModel];
+            
+            if (weakSelf.locations.count >= 2) {
+                [weakSelf.locations sortUsingComparator:^NSComparisonResult(MapModel *obj1, MapModel *obj2) {
+                    return obj1.DiscountRate.floatValue > obj2.DiscountRate.floatValue;
+                }];
+            }
+            [weakSelf.infoView.tableView reloadData];
+            
+            if (weakSelf.locations.firstObject == mapModel) {
+                weakSelf.destinationAnnotation = annotation;
+                /** 计算路线 */
+                [weakSelf calculateRouteWithUserAnnotation:annotation destinationAnnotation:weakSelf.destinationAnnotation];
+            }
+        }else{
+            NSLog(@"地址没找到，可能在月球上:%@",error);
+        }
+    }];
+}
+
+-(MapInfoView *)infoView
+{
+    if (!_infoView) {
+        NSInteger count = (self.dataArray.count >= 3 ) ? 3 : self.dataArray.count;
+        _infoView = [[MapInfoView alloc] initWithFrame:CGRectMake(0, self.view.height - 44*count,WIDTH, 44*count) dataArr:self.locations];
+        _infoView.backgroundColor = [UIColor colorWithRGBHex:0x90111111];
+        _infoView.alpha = 0.9;
+        __weak typeof(self) weakSelf = self;
+        _infoView.didSelectIndexBlock = ^(NSInteger index){
+            MapModel *mm = weakSelf.locations[index];
+            NSInteger selectedIndex = weakSelf.annotations.count + 1;
+            for (QTAnnotation *aa in weakSelf.annotations) {
+                if ([aa.title isEqualToString:mm.Remarks]) {
+                    selectedIndex = [weakSelf.annotations indexOfObject:aa];
+                    break;
+                }
+            }
+            /** 找不出来 则不重新计算 */
+            if (selectedIndex < weakSelf.annotations.count) {
+                weakSelf.destinationAnnotation = weakSelf.annotations[selectedIndex];
+                /** 计算路线 */
+                [weakSelf calculateRouteWithUserAnnotation:weakSelf.userAnnotation destinationAnnotation:weakSelf.destinationAnnotation];
+            }
+        };
+        // 添加信息View
+        [self.view addSubview:_infoView];
+        
+    }
+    return _infoView;
+}
+
+/** 设置distanceView上的label显示的内容 */
+-(void)setDistanceViewWithDistance:(NSString*)dis hour:(NSString *)hour
+{
+    UILabel *label = self.distanceView.subviews.firstObject;
+    label.text = dis;
+    UILabel *label1 = self.distanceView.subviews.lastObject;
+    label1.text = hour;
+}
+
+-(UIView *)distanceView
+{
+    if (!_distanceView) {
+        NSString *str = @"全程共:9999.99km";
+        CGFloat labelH = 15;
+        CGFloat width = [str getWidthWithLimitHeight:labelH fontSize:13.0];
+        CGFloat left = 10;
+        _distanceView = [[UIView alloc]initWithFrame:CGRectMake(0,0,width+left*2,60)];
+        _distanceView.backgroundColor = [UIColor colorWithRGBHex:0x90111111];
+        
+        for(int i = 0;i<2;i++){
+            UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(left,12+(labelH+10)*i, _distanceView.width-left*2, labelH)];
+            label.textColor = [UIColor colorWithRGBHex:0xffffff];
+            label.textAlignment = NSTextAlignmentLeft;
+            label.font = [UIFont systemFontOfSize:13.0f];
+            label.tag = i ;
+            [_distanceView addSubview:label];
+        }
+    }
+    return _distanceView;
+}
+
+-(void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    UITouch * touch = [touches anyObject];
+    CGPoint point = [touch locationInView:self.view];
+    if (CGRectContainsPoint(self.distanceView.frame, point)) {
+        self.distanceView.center = point;
+    }
+}
+
+#pragma mark - 弹出框点击方法
+/** 点击弹出框 进行跳转 */
+- (void)mapView:(MAMapView *)mapView didAnnotationViewCalloutTapped:(MAAnnotationView *)view
+{
+    if ([view.annotation isKindOfClass:[QTAnnotation class]]) {
+        QTAnnotation *anno = (QTAnnotation *)view.annotation;
+        if (anno.mapModel != nil) {
+            if( self.kLineType == KLine_buyerInquiry   || 
+                self.kLineType == KLine_buyerSpecify   ||
+                self.kLineType == KLine_sellerSpecify  ||
+                self.kLineType == KLine_sellerInquiry  )
+            {
+                BuyerInfoViewController* vc = [[BuyerInfoViewController alloc]init];
+                [vc.inquiryInfoVM setCurrentModel:anno.mapModel];
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+        }
+    }
+
+}
+
+@end

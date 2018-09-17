@@ -1,0 +1,210 @@
+/* 
+  Localizable.strings
+  Billunion
+
+  Created by QT on 2017/3/20.
+  Copyright © 2017年 JM. All rights reserved.
+ 
+ NSLocalizedString(@"Home", nil)
+*/
+
+/* Login and Register  */
+"Visitor" = "游客";
+"ForgetPassword" = "忘记密码";
+"Login" = "登 录";
+"PhoneNumber" = "请输入手机号";
+"Password" = "请输入密码";
+"VerifyCode" = "请输入验证码";
+"GetCode" = "获取验证码";
+"Submit" = "提 交";
+"Confirm" = "确 定";
+"NewPassword" = "新密码";
+"ConfirmPassword" = "确认密码";
+
+/* 首页 */
+"Home" = "首页" ;
+"MyBuy" = "我的买入";
+"MySell" = "我的卖出";
+
+"NearStock" = "附近票源";
+"Market"    = "票据行情";
+"Trade"     = "票据交易";
+"Assets"    = "票据资产";
+"Record"    = "交易记录";
+"Index"     = "普创指数";
+"Abstract"  = "今日摘要";
+"More"    = "更多";
+"YinCheng" = "普创银承指数";
+"ShangCheng" = "普创商承指数";
+"TodayTrade" = "今日成交";
+"TotalTrade" = "累计成交";
+"Billion"      = "亿";
+
+"PaperTicket" = "纸票";
+"ElectricTicket" = "电票";
+"SellerMarket"   =  "卖方市场";
+"BuyerMarket"    = "买方市场";
+"Filter"         = "筛选条件";
+"Reset"          = "恢复";
+"Select"         = "选择";
+"Finish"         = "完成";
+"AddStock"       = "添加票据";
+
+"AskBuy"            = "询价买入";
+"SpecifiedBuy"      = "指定买入";
+"QuoteBuy"          = "报价买入";
+"BeSpecifiedSell"   = "被指定卖出";
+
+"AskSell"           = "询价卖出";
+"SpecifiedSell"     = "指定卖出";
+"QuoteSell"         = "报价卖出";
+"BeSpecifiedBuy"    = "被指定买入";
+
+// 我的
+"Me" = "我的";
+"UserCenter"        = "用户中心";
+"AboutUs"           = "关于我们";
+"FeedbackProblems"  = "问题反馈";
+"CheckUpdate"       = "检查更新";
+"SystemNotice"      = "系统公告";
+"SystemInform"      = "系统通知";
+"Logout"            = "退出登录";
+"LogoutSuccess"     = "登出成功";
+"LogoutFail"        = "登出失败";
+"Tips"              = "提示";
+"Sure"              = "确定";
+"InputYourOpinion"  = "请输入您的意见。。。。";
+
+// 用户中心的
+"AccountName"           = "姓名";
+"CompanyName"           = "机构";
+"City"                  = "城市";
+"E-mail"                = "邮箱";
+"Phone"                 = "手机";
+"TradeTimes"            = "交易笔数";
+"SuccessTimes"          = "成功笔数";
+"FailTimes"             = "失败笔数";
+"SuccessAmount"         = "成交金额";
+"FailAmount"            = "失败金额";
+"SuccessRate"           = "成交率";
+
+// 票据添加
+"BillNum"               = "票据号";
+"Acceptor"              = "承兑人";
+"StockAmount"           = "票面金额";
+"ReleaseDate"           = "出票日期";
+"ExpireDate"            = "到票日期";
+"DetailAddress"         = "详细地址";
+"CurrentCity"           = "票据城市";
+"PositiveImage"         = "票据正面图";
+"BackImage"             = "票据反面图";
+"Camera"                = "相机";
+"PhotoAlbum"            = "相册";
+"HavePicture"           = "已有图片";
+"FillInEightDigitBillNum"       = "填写8位票据号码";
+"FillInAcceptor"                = "填写承兑人姓名";
+"AccurateToTwoDecimalPlaces"    = "精确到小数点后2位";
+
+//指数
+"PBankNote"         = "银承纸票";
+"EBankNote"         = "银承电票";
+"EBusinessNote"     = "商承电票";
+
+// 产品编号
+"ProductCode"       = "产品编号";
+"Amount"            = "金额(万)";
+"DiscountRate"      = "贴现率";
+"BillType"          = "票据类型";
+"Holder"            = "持票人";
+"TradeState"        = "交易状态";
+"StockAddress"      = "票源地址";
+"DueTimeRange"      = "票据期限";
+"RemainingDays"     = "剩余期限(天)";
+"DeliveryTime"      = "交割时间";
+"TradeType"         = "交易类型";
+"AuditState"        = "审核状态";
+"Counterpart"       = "交易对手方";
+"InquiryParty"      = "询价方";
+"QuoteParty"        = "报价方";
+
+// 按钮
+"Selling"       = "卖出";
+"Buying"        = "买入";
+"StockDistance" = "票源距离";
+"UndoStock"     = "撤销报价";
+"ModifyOffer"   = "修改报价";
+"UndoOffer"     = "撤销报价";
+"CancelTrade"   = "撤销报价";
+"CloseType"     = "成交类型";
+
+"SelectedStock"     = "票据挑选";
+"IsAnonymous"       = "是否匿名";
+"YES"               = "是";
+"NO"                = "否";
+"Delete"            = "删除";
+"Edit"              = "编辑";
+"DefaultAddress"    = "默认地址";
+"SelectedAddress"   = "选择地址";
+"SelectedCity"      = "已选城市";
+"CurrentLocation"   = "当前位置";
+
+// 其他
+"Unknown" = "未知";
+ "DISCOUNTRATE_ERROR"   = "贴现率输入格式不正确";
+ "DISCOUNTRATE_NONE"    = "个别票据还没有赋予贴现率!";
+ "IS_DELETE_ADDRESS"    = "确认要删除以下地址？";
+ "SURE_DEL"             = "确认删除";
+ "CANCEL_DEL"           = "放弃操作";
+ "ADD_NEW_ADDRESS"      = "新增地址";
+ "NO_MORE_PASS_STOCK"   = "无符合交易要求的票据";
+
+ "CANT_TRADE_YOURSELF"          =  "不能与自己进行交易哦！";
+ "CANT_REPEAT_BUY"              = "不能重复进行买入！";
+ "NONE_OFFER"                   =  "您还没有进行报价哦！";
+ "IS_CANCEL_OFFER"              = "确定需要执行撤销报价操作？";
+ "UPLOADING"                    = "正在上传中...";
+
+ "ERROR_STOCK_NUM"              = "票据号不正确";
+ "ERROR_STOCK_ACCEPTOR"         = "请填写正确的承兑人";
+ "ERROR_STOCK_AMOUNT"           = "票面金额不正确";
+ "ERROR_STOCK_DATE"             = "请选择票据日期";
+ "ERROR_STOCK_ADDRESS"          = "请选择票据地址";
+ "ERROR_STOCK_FRONT_IMAGE"      = "请选择正面截图";
+ "ERROR_STOCK_BACK_IMAGE"       = "请选择背面截图";
+ "ERROR_CANT_USE_CAMERA"        = "相机不可用";
+ "ERROR_PLEASE_SELECT"          = "请选择";
+ "ERROR_OPEN_CAMERA"            = "请打开照相机,才能拍照";
+ "ERROR_OUT_RANGE"              = "票源范围输入不正确";
+ "ERROR_STOCK_CANT_DELETE"      = "票据已发布,不能删除！";
+
+ "DELETE_OK"                    = "删除成功";
+ "DELETE_FAIL"                  = "删除失败";
+ "QUOTE_OK"                     = "报价成功";
+ "QUOTE_FAIL"                   = "报价失败";
+ "QUOTE_RESET_OK"               = "修改报价成功";
+ "QUOTE_RESET_FAIL"             = "修改报价失败";
+"UNDO_OK"                       = "撤销成功";
+"UNDO_FAIL"                     = "撤销失败";
+
+ "ADD_OK"                       = "添加成功";
+ "ADD_FAIL"                     = "添加失败";
+ "SUBMIT_OK"                    = "提交成功!";
+ "SUBMIT_FAIL"                  = "提交失败，请重试！";
+ "TRADE_OK"                     = "成交成功" ;
+ "TRADE_FAIL"                   = "成交失败";
+ "ERROR_VERIFY"                 = "客官稍等，验证码正在路上";
+
+ "ERROR_NETWORK"                = "网络出错";
+ "ERROR_GET_DATA_OK"            = "获取成功";
+ "ERROR_GET_DATA_FAIL"          = "获取数据失败";
+ "NO_MORE_DATA"                 = "没有更多数据!";
+ "ERROR_DATA"                   = "数据出错";
+
+ "ERROR_PHONE_NUM"              = "请输入正确的手机号码!";
+ "ERROR_VERIFY_CODE"            = "验证码不能为空!";
+ "ERROR_PWD_NONE"               = "密码不能为空!";
+ "ERROR_PWD_NOT_SAME"           = "密码不一致!";
+ "ERROR_PWD_RESET_FAIL"         = "密码更改不成功";
+"ABOUT_US_INFO"                = "    广州普惠创新金融信息服务有限公司性质是属于“其它金融业”的金融科技服务型企业，致力于建立基于互联网与金融专线的统一互联的中国金融场外交易基础设施，以推动利率市场化为目标。\n     生产系统主要包括管理信息系统、报价系统、竞价系统、撮合系统、登记系统、资金调拨信息系统，资金汇划信息系统和清算报文生成系统等，第一期目标为构建中国普创票联。";
+
+

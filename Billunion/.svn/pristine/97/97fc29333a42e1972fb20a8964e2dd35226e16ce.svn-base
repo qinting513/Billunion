@@ -1,0 +1,133 @@
+//
+//  NearStockViewModel.m
+//  Billunion
+//
+//  Created by QT on 17/2/27.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "NearStockViewModel.h"
+#import "MarketViewModel.h"
+#import "StockModel.h"
+#import "FGNetworking.h"
+#import "BuyerDetailModel.h"
+#import "MapModel.h"
+
+@interface NearStockViewModel ()
+
+@end
+
+@implementation NearStockViewModel
+
+
+-(void)requestDataWithType:(KLINE_TYPE)type
+              acceptorType:(NSNumber*)acceptorType
+              dueTimeRange:(NSNumber*)dueTimeRange
+                finishBlock:(void(^)(id model, NSString *errorStr))finishBlock{
+    
+    __weak typeof(self) weakSelf = self;
+    
+    NSArray *acceptors  = nil;
+    NSArray *dues = nil;
+    if (acceptorType != nil) {
+        acceptors = @[acceptorType];
+    }
+    if (dueTimeRange != nil) {
+        dues = @[dueTimeRange];
+    }
+    
+    [MarketViewModel requestSellerInquiryListWithBillType:@[@1]
+                                                     page:1
+                                             acceptorType:acceptors
+                                             dueTimeRange:dues
+                                                  address:nil
+                                                 response:^(NSArray *dataArr, NSString *errorStr) {
+        if (errorStr == nil) {
+            
+            if (dataArr.count == 0) {
+                finishBlock(nil,NSLocalizedString(@"NO_MORE_PASS_STOCK", nil));
+                return ;
+            }
+            
+            for (int i=0; i<dataArr.count; i++) {
+                StockModel *model = dataArr[i];
+                [weakSelf requestDetailWithsType:type model:model response:^(BOOL isSuccess, NSString *message, id data){
+                    if (isSuccess) {
+                       finishBlock(data,nil);
+                    }
+                }];
+            }
+            
+        }
+    }];
+}
+
+- (void)requestDetailWithsType:(KLINE_TYPE)type model:(StockModel*)model response:(void(^)(BOOL isSuccess,NSString *message,id data))block{
+    NSString *path;
+    NSNumber *operType;
+    NSNumber *InquiryId;
+    if (type == KLine_buyerInquiry ||
+        type == KLine_buyerSpecify ||
+        type == KLine_buyerOffer ||
+        type == KLine_beSellerSpecify ||
+        type == KLine_buyerMarket) {
+        //查询买方市场询价详情
+        path = BUYER_INQUIRY_DETAIL;
+        operType = @303;
+        if (type == KLine_buyerMarket) {
+            InquiryId  = model.InquiryId;
+        }else{
+            InquiryId  = model.Id;
+        }
+    }else{
+        //查询卖方市场询价详情
+        path = SELLER_INQUIRY_DETAIL;
+        operType = @302;
+        if (type == KLine_sellerMarket) {
+            InquiryId  = model.InquiryId;
+        }else{
+            InquiryId  = model.Id;
+        }
+    }
+    
+    if (!InquiryId) {
+        block(NO,NSLocalizedString(@"ERROR_GET_DATA_FAIL", nil) ,nil);
+        return;
+    }
+    NSDictionary *params = @{@"OperType":operType,
+                             @"Param":@{@"Id":InquiryId}
+                             };
+    DEBUGLOG(@"%@\n%@",path,params);
+    MapModel *mapModel = [[MapModel alloc]init];
+    mapModel.InquiryId = InquiryId;
+    mapModel.kLineType = type;
+    mapModel.CompanyName = model.OfferName;
+    mapModel.DiscountRate = model.DiscountRate;
+    mapModel.Amount = model.Amount;
+    [FGNetworking requsetWithPath:path params:params method:Post handleBlcok:^(id response, NSError *error) {
+        if (!error) {
+            DEBUGLOG(@"%@\n%@",path,response);
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0) {
+                if (response[@"Data"] && ![response[@"Data"] isKindOfClass:[NSNull class]]) {
+                    if (path == BUYER_INQUIRY_DETAIL) {
+                          BuyerDetailModel *model = [BuyerDetailModel mj_objectWithKeyValues:response[@"Data"]];
+                        mapModel.Remarks = model.Address;
+                       
+                    }else{
+                        StockModel * assetsModel = [[StockModel mj_objectArrayWithKeyValuesArray:response[@"Data"][@"BillList"]] firstObject];
+                        mapModel.Remarks = assetsModel.Remarks;
+                    }
+                    
+                    !block ?: block(YES, NSLocalizedString(@"ERROR_GET_DATA_OK", nil),mapModel);
+                }
+            }else{
+                !block ?: block(NO,NSLocalizedString(@"ERROR_GET_DATA_FAIL", nil),nil);
+            }
+        }else{
+            block(NO, NSLocalizedString(@"ERROR_NETWORK", nil),nil);
+        }
+    }];
+}
+
+@end

@@ -1,0 +1,125 @@
+//
+//  Config.h
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import <Foundation/Foundation.h>
+
+#define WIDTH [UIScreen mainScreen].bounds.size.width
+#define HEIGHT [UIScreen mainScreen].bounds.size.height
+
+#define MainColor [UIColor colorWithRGBHex:0x141414]
+#define SeparatorColor [UIColor colorWithRGBHex:0x333333]
+
+#define KScreenSize [UIScreen mainScreen].bounds.size
+#define KScreenwidth [UIScreen mainScreen].bounds.size.width
+#define KScreenheight [UIScreen mainScreen].bounds.size.height
+#define IsIphone6P KScreenSize.width==414
+#define IsIphone6 KScreenSize.width==375
+#define IsIphone5S KScreenSize.height==568
+#define IsIphone5 KScreenSize.height==568
+//456字体大小
+#define KIOS_Iphone456(iphone6p,iphone6,iphone5s,iphone5,iphone4s) (IsIphone6P?iphone6p:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?iphone5s:iphone4s)))
+//宽高
+#define KIphoneSize_Widith(iphone6) (IsIphone6P?1.104*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.853*iphone6:0.853*iphone6)))
+#define KIphoneSize_Height(iphone6) (IsIphone6P?1.103*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.851*iphone6:0.720*iphone6)))
+
+
+
+#define kAcceptor        @"Acceptor"
+#define kDueTimeRange    @"DueTimeRange"
+#define kAddress         @"Address"
+#define kRange           @"Range"
+#define kBillType        @"BillType"
+#define kCurrentCityName  @"kCurrentCityName"
+
+/** 新的交易信息通知 */
+FOUNDATION_EXPORT NSString *const TRADE_NOTIFICATION;
+
+
+/** @"贴现率输入格式不正确" */
+FOUNDATION_EXPORT NSString *const DISCOUNTRATE_ERROR;
+/** @"个别票据还没有赋予贴现率!" */
+FOUNDATION_EXPORT NSString *const DISCOUNTRATE_NONE;
+/** @"确认要删除以下地址？" */
+FOUNDATION_EXPORT NSString *const IS_DELETE_ADDRESS;
+/** 确认删除 */
+FOUNDATION_EXPORT NSString *const SURE_DEL;
+/** 取消删除 */
+FOUNDATION_EXPORT NSString *const CANCEL_DEL;
+/** 新增地址 */
+FOUNDATION_EXPORT NSString *const ADD_NEW_ADDRESS;
+/** 没有更多数据 */
+FOUNDATION_EXPORT NSString *const NO_MORE_DATA;
+/** @"无符合交易要求的票据" */
+FOUNDATION_EXPORT NSString *const NO_MORE_PASS_STOCK;
+/** 关于我们的介绍 */
+FOUNDATION_EXPORT NSString *const ABOUT_US_INFO;
+/**  @"请输入您的意见。。。。" */
+FOUNDATION_EXPORT NSString *const INPUT_YOUR_OPINION;
+/** @"不能与自己进行交易哦！" */
+FOUNDATION_EXPORT NSString *const CANT_TRADE_YOURSELF;
+FOUNDATION_EXPORT NSString *const CANT_REPEAT_BUY;
+/** @"您还没有进行报价哦！" */
+FOUNDATION_EXPORT NSString *const NONE_OFFER;
+/** 是否要撤销报价 */
+FOUNDATION_EXPORT NSString *const IS_CANCEL_OFFER;
+/** @"正在上传中..." */
+FOUNDATION_EXPORT NSString *const UPLOADING;
+
+/** 票据添加 */
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_NUM;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_ACCEPTOR;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_AMOUNT;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_DATE;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_ADDRESS;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_FRONT_IMAGE;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_BACK_IMAGE;
+FOUNDATION_EXPORT NSString *const ERROR_CANT_USE_CAMERA;
+FOUNDATION_EXPORT NSString *const ERROR_PLEASE_SELECT;
+FOUNDATION_EXPORT NSString *const ERROR_OPEN_CAMERA;
+FOUNDATION_EXPORT NSString *const ERROR_OUT_RANGE;
+FOUNDATION_EXPORT NSString *const ERROR_STOCK_CANT_DELETE;
+
+FOUNDATION_EXPORT NSString *const DELETE_OK;
+FOUNDATION_EXPORT NSString *const DELETE_FAIL;
+FOUNDATION_EXPORT NSString *const ADD_OK;
+FOUNDATION_EXPORT NSString *const ADD_FAIL;
+// 提交成功
+FOUNDATION_EXPORT NSString *const SUBMIT_OK;
+FOUNDATION_EXPORT NSString *const SUBMIT_FAIL;
+//  交易成功
+FOUNDATION_EXPORT NSString *const TRADE_OK ;
+FOUNDATION_EXPORT NSString *const TRADE_FAIL;
+// 报价成功
+FOUNDATION_EXPORT NSString *const QUOTE_OK;
+FOUNDATION_EXPORT NSString *const QUOTE_FAIL;
+FOUNDATION_EXPORT NSString *const QUOTE_RESET_OK;
+FOUNDATION_EXPORT NSString *const QUOTE_RESET_FAIL;
+//撤销
+FOUNDATION_EXPORT NSString *const UNDO_OK;
+FOUNDATION_EXPORT NSString *const UNDO_FAIL;
+// 验证码正在路上
+FOUNDATION_EXPORT NSString *const ERROR_VERIFY;
+
+/** 网络 */
+FOUNDATION_EXPORT NSString *const ERROR_NETWORK;
+FOUNDATION_EXPORT NSString *const ERROR_GET_DATA_OK;
+FOUNDATION_EXPORT NSString *const ERROR_GET_DATA_FAIL;
+/** 状态码不是0 */
+FOUNDATION_EXPORT NSString *const ERROR_DATA;
+
+/** login */
+FOUNDATION_EXPORT NSString *const ERROR_PHONE_NUM;
+FOUNDATION_EXPORT NSString *const ERROR_VERIFY_CODE;
+FOUNDATION_EXPORT NSString *const ERROR_PWD_NONE;
+FOUNDATION_EXPORT NSString *const ERROR_PWD_NOT_SAME;
+FOUNDATION_EXPORT NSString *const ERROR_PWD_RESET_FAIL;
+@interface Config : NSObject
+
+
+
+@end

@@ -1,0 +1,330 @@
+//
+//  HomeViewController.m
+//  PCStock
+//
+//  Created by Waki on 2016/12/27.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import "HomeViewController.h"
+#import "HomeNumberCell.h"
+#import "HomeNoticeCell.h"
+#import "ScrollLabelCell.h"
+#import "MoreIndexViewController.h"
+#import "MoreNoticeViewController.h"
+
+#import "MineViewController.h"
+#import "MqttControl.h"
+#import "KLineView.h"
+#import "QTVerticalButton.h"
+#import "NoticeModel.h"
+#import "HomeViewModel.h"
+
+#import "MarketViewController.h"
+#import "TrandeRecordViewController.h"
+#import "TradeViewController.h"
+#import "AssetsViewController.h"
+
+#import "BuyerInfoViewController.h"
+#import "StockInfoViewController.h"
+#import "HomeViewModel.h"
+#import "NearStockMapViewController.h"
+#import "NewsDetailViewController.h"
+
+
+@interface HomeViewController ()<UITableViewDelegate,UITableViewDataSource,HomeNumberCellDelegate,ScrollLabelCellDelegate>
+{
+    UITableView *_tableView;
+    MqttControl *_mqtt;
+    NSArray *_noticeArray;
+}
+@property (nonatomic,strong) NSArray *indexArray;
+@end
+
+@implementation HomeViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+    [self setupTableView];
+    [self setupLeftBarBtn];
+    //  _mqtt = [[MqttControl alloc] init];
+    
+    /** 加载数据 */
+    [self loadData];
+}
+
+/** ---------- 请求数据 ------------ */
+-(void)loadData
+{
+    [self requestIndex];
+    [self requestNotice];
+}
+
+-(void)requestIndex{
+ 
+    __weak typeof(self) weakSelf = self;
+    [HomeViewModel requestIndexResponse:^(NSArray *dataArray, NSString *errorStr) {
+        if (errorStr == nil) {
+              weakSelf.indexArray = dataArray;
+              [weakSelf reloadTableView:nil];
+        }
+    }];
+}
+
+- (void)requestNotice{
+    __weak typeof(self) weakSelf = self;
+    [HomeViewModel requestNoticeWithPage:1 itemNum:5 noticeType:NoticeTypeNews response:^(NSArray *dataArray, NSString *errorStr) {
+        [weakSelf responseNotice:dataArray error:errorStr];
+    }];
+}
+
+- (void)responseNotice:(NSArray *)dataArray error:(NSString *)errorStr{
+    if (dataArray && !errorStr) {
+        _noticeArray = dataArray;
+    }
+    [self reloadTableView:nil];
+}
+-(void)reloadTableView:(NSIndexPath *)indexPath
+{
+    if (_tableView) {
+        [_tableView reloadData];
+    }
+}
+
+
+-(void)setupLeftBarBtn
+{
+    UIButton *btn = [UIButton buttonWithNormalImage:@"icons_message" selectImage:@"icons_message" imageType:btnImgTypeSmall target:self action:@selector(gotoUserInfoVC)];
+    btn.frame = CGRectMake(0, 0, 50, 44);
+    btn.imageEdgeInsets = UIEdgeInsetsMake(0, -10, 0, 10);
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btn];
+    
+    UIButton *rightBtn = [UIButton buttonWithTitle:NSLocalizedString(@"NearStock", nil) titleFont:13 titleColor:[UIColor whiteColor] target:self action:@selector(gotoUserNearStockVC)];
+    rightBtn.frame = CGRectMake(0, 0, 80, 44);
+    rightBtn.titleEdgeInsets = UIEdgeInsetsMake(0, 0, 0, -20);
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:rightBtn];
+}
+/** 左上角按钮  */
+-(void)gotoUserInfoVC{
+    
+    if(![Tools isUserLogin]){
+        [self loginWithController:self];
+        return;
+    }
+    MineViewController *vc = [MineViewController new];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+-(void)gotoUserNearStockVC
+{
+    NearStockMapViewController *vc = [[NearStockMapViewController alloc]init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)setupTableView{
+    _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 64, WIDTH, HEIGHT-49-64) style:UITableViewStyleGrouped];
+    _tableView.dataSource = self;
+    _tableView.delegate = self;
+    _tableView.showsVerticalScrollIndicator = NO;
+    _tableView.separatorColor  = SeparatorColor;
+    _tableView.backgroundColor = [UIColor clearColor];
+    _tableView.separatorStyle = UITableViewCellSelectionStyleNone;
+    [self.view addSubview:_tableView];
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+
+    return 4;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    if (section == 3) {
+        return  _noticeArray.count;
+    }
+    return 1;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    UITableViewCell *cell;
+    if (indexPath.section == 0) {
+        cell = [tableView dequeueReusableCellWithIdentifier:@"HomeCell"];
+        if (!cell) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"HomeCell"];
+        }
+    }else if (indexPath.section == 1){
+         cell = [tableView dequeueReusableCellWithIdentifier:@"HomeNumberCell"];
+        if (!cell) {
+            cell = [[HomeNumberCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"HomeNumberCell"];
+        }
+        ((HomeNumberCell *)cell).delegate = self;
+        [(HomeNumberCell *)cell setCellInfo:self.indexArray];
+    }else if(indexPath.section == 2){
+        cell = [tableView dequeueReusableCellWithIdentifier:@"ScrollLabelCell"];
+        if (!cell) {
+            cell = [[ScrollLabelCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"ScrollLabelCell"];
+        }
+    }else{
+        if (!cell) {
+            cell = [[HomeNoticeCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"HomeNoticeCell"];
+        }
+    }
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.backgroundColor = [UIColor clearColor];
+    cell.contentView.backgroundColor = [UIColor colorWithRGBHex:0x141414];
+    if (indexPath.section == 0) {
+        [self layoutSection0:cell];
+    }else if (indexPath.section == 1){
+        [(HomeNumberCell*)cell setCellInfo:nil];
+    }else if (indexPath.section == 2){
+        [(ScrollLabelCell *)cell setCellInfo:@"您有新的系统消息，请注意查收!"];
+        ((ScrollLabelCell *)cell).delegate = self;
+    }else if (indexPath.section == 3){
+        [(HomeNoticeCell *)cell setCellInfo:_noticeArray[indexPath.row]];
+        
+    }
+    if (indexPath.section != 3) {
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    }
+   
+    return cell;
+}
+
+- (void)layoutSection0:(UITableViewCell *)cell{
+    [cell.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    NSArray *titleArr = @[  NSLocalizedString(@"Market", nil),
+                            NSLocalizedString(@"Trade", nil),
+                            NSLocalizedString(@"Assets", nil),
+                            NSLocalizedString(@"Record", nil),
+                         ];
+    NSArray *imgArr   =   @[@"market",@"deal",@"property",@"record"];
+    NSArray *selImgArr = @[@"marker_pr",@"deal_pr",@"property_pr",@"record_pr"];
+    
+    for (int i = 0; i < titleArr.count; i++) {
+        CGRect rect = STRect(58+(i*(100+74)), 30, 120, 120);
+         UIColor *titleColor = [UIColor colorWithRGBHex:0x93a6be];
+        QTVerticalButton *button = [QTVerticalButton buttonTitle:titleArr[i] img:imgArr[i] selectImg:selImgArr[i] font:12 titleColor:titleColor target:self action:@selector(buttonClick:)];
+        button.frame = rect;
+        button.tag = 40 + i;
+        [cell.contentView addSubview:button];
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 0) {
+         return  STRealY(200);
+    }else if (indexPath.section == 1){
+        return  STRealY(606);
+    }else if (indexPath.section == 2){
+        return STRealY(90);
+    }else{
+        return  44;
+    }
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+       UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, WIDTH, 45/2)];
+    view.backgroundColor = [UIColor blackColor];
+    
+    if (section == 3) {
+        //Abstract
+        UILabel *titleLable = [UILabel labelWithText: NSLocalizedString(@"Abstract", nil) fontSize:13 textColor:[UIColor colorWithRGBHex:0x93a6be] alignment:NSTextAlignmentLeft];
+        [view addSubview:titleLable];
+        titleLable.sd_layout.leftSpaceToView(view,STRealX(34)).topSpaceToView(view,STRealX(20)).rightSpaceToView(view,100).heightIs(13);
+         view.backgroundColor = [UIColor colorWithRGBHex:0x141414];
+        
+        //更多
+        UIButton * moreBtn = [UIButton buttonWithNormalImage:@"more" selectImage:@"more_pr" imageType:btnImgTypeFull target:self action:@selector(moreNoticeClick)];
+        [moreBtn setTitle:NSLocalizedString(@"More", nil) forState:UIControlStateNormal];
+        moreBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+        [view addSubview:moreBtn];
+        
+        moreBtn.sd_layout.rightEqualToView(view).centerYEqualToView(titleLable).widthIs(STRealX(90)).heightIs(STRealX(39));
+    }
+    return view;
+}
+
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    if (section == 0) {
+        return 2;
+    }else if (section == 1 || section == 2){
+        return  10;
+    }else {
+        return  38;
+    }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
+    return 0.5;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
+    UIView *view= [[UIView alloc] initWithFrame:CGRectMake(0, 0, WIDTH, 0.5)];
+    view.backgroundColor = [UIColor blackColor];
+    return view;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 3) {
+        //选择消息，跳转到web页面
+        NewsDetailViewController *newsCtl = [[NewsDetailViewController alloc] init];
+        newsCtl.model = _noticeArray[indexPath.row];
+        [self.navigationController pushViewController:newsCtl animated:YES];
+        [tableView deselectRowAtIndexPath:indexPath animated:NO];
+    }
+
+}
+
+- (void)buttonClick:(UIButton *)btn{
+    UIViewController *viewCtl;
+    switch ((int)btn.tag - 40) {
+        case 0: viewCtl = [[MarketViewController alloc] init];
+            break;
+        case 1: viewCtl = [[TradeViewController alloc] init];
+            break;
+        case 2: viewCtl = [[AssetsViewController alloc] init];
+            break;
+        case 3: viewCtl = [[TrandeRecordViewController alloc] init];
+            break;
+        default:
+            break;
+    }
+    
+        if(![Tools isUserLogin] && (btn.tag-40)>0 ){
+            [self loginWithController:self];
+        }else{
+            ((BaseViewController *)viewCtl).stockType = (int)btn.tag - 40;
+            [self.navigationController pushViewController:viewCtl animated:YES];
+        }
+}
+
+#pragma mark - HomeNumberCellDelegate
+- (void)moreAction{
+    MoreIndexViewController *vc = [[MoreIndexViewController alloc]init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+
+#pragma mark - 更多公告点击
+- (void)moreNoticeClick{
+     MoreNoticeViewController *vc = [[MoreNoticeViewController alloc] init];
+     [self.navigationController pushViewController:vc animated:YES];
+}
+
+-(void)dealloc
+{
+    NSLog(@"%s",__func__);
+    NSIndexPath *indexP = [NSIndexPath indexPathForRow:0 inSection:2];
+    ScrollLabelCell *cell = [_tableView cellForRowAtIndexPath:indexP];
+    [cell.timer invalidate];
+    cell.timer = nil;
+}
+
+#pragma mark - ScrollLabelCellDelegate
+-(void)scrollLabelCell:(ScrollLabelCell *)cell didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    MoreNoticeViewController *vc = [[MoreNoticeViewController alloc] init];
+    vc.noticeType = NoticeTypeTrade;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+@end

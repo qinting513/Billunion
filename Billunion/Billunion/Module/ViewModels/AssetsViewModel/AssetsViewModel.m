@@ -1,0 +1,158 @@
+
+//
+//  AssetsViewModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/2/14.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "AssetsViewModel.h"
+#import "StockModel.h"
+#import "FGNetworking.h"
+
+@implementation AssetsViewModel
+
+// market/sellerInquiryList  查询卖方市场行情列表  纸票 1 电票 2
++(void)requestPropertyBillListWithParams:(NSDictionary *)parems stockAllType:(StockAllType)stockType response:( void(^)(NSArray *dataArr,NSString *errorStr))block
+{
+    NSDictionary *params = @{@"OperType":@708,
+                             @"Param":parems};
+    DEBUGLOG(@"%@\n%@",BILL_LIST,params);
+    [FGNetworking requsetWithPath:BILL_LIST params:params method:Post handleBlcok:^(id response, NSError *error) {
+        DEBUGLOG(@"%@\n%@",BILL_LIST,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0 && [response[@"Data"] isKindOfClass:[NSArray class]]) {
+                NSArray *dataArr = response[@"Data"];
+                if (dataArr.count == 0) {
+                    !block ?: block(nil,@"没有更多数据!" );
+                    return ;
+                }
+
+                NSMutableArray *modelArr = [[NSMutableArray alloc] init];
+                for (int i = 0; i < dataArr.count; i++) {
+                    StockModel *model = [StockModel mj_objectWithKeyValues:response[@"Data"][i]];
+                    model.stockType = stockType;
+                    [modelArr addObject:model];
+                }
+                !block ?: block(modelArr,nil);
+            }else{
+               !block ?: block(nil, @"没有更多数据!" );
+            }
+        }else{
+            !block ?: block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+//            NSLog(@"网络请求出错：%@",error);
+        }
+    }];
+}
+
++(void)requestTradeBillListWithPage:(NSInteger)page
+                           billType:(NSInteger)billType
+                           response:( void(^)(NSArray *dataArr,NSString *errorStr))block{
+    NSMutableDictionary *params = [NSMutableDictionary dictionary];
+    params[@"Page"] = @(page);
+    params[@"ItemNum"] = @20;
+    params[@"BillType"] = @(billType);
+    
+    DEBUGLOG(@"%@\n%@",TRADE_BILL_LIST,params);
+    [FGNetworking requsetWithPath:TRADE_BILL_LIST params:params method:Post handleBlcok:^(id response, NSError *error) {
+        DEBUGLOG(@"%@\n%@",TRADE_BILL_LIST,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0 && [response[@"Data"] isKindOfClass:[NSArray class]]) {
+                NSArray *dataArr = response[@"Data"];
+                if (dataArr.count == 0) {
+                   !block ?: block(nil,@"没有更多数据!" );
+                    return ;
+                }
+                
+                NSMutableArray *modelArr = [[NSMutableArray alloc] init];
+                for (int i = 0; i < dataArr.count; i++) {
+                    StockModel *model = [StockModel mj_objectWithKeyValues:response[@"Data"][i]];
+                    model.stockType = StockAllType_Tade_askSell;
+                    [modelArr addObject:model];
+                }
+                !block ?: block(modelArr,nil);
+            }else{
+                !block ?: block(nil,NSLocalizedString(@"NO_MORE_PASS_STOCK", nil) );
+            }
+        }else{
+            !block ?: block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+            //            NSLog(@"网络请求出错：%@",error);
+        }
+    }];
+}
+
+
+
++(void)requestTradeBillListWithPage:(NSInteger)page inquiryId:(NSNumber*)inquiryId response:( void(^)(NSArray *dataArr,NSString *errorStr))block
+{
+    NSMutableDictionary *params = [NSMutableDictionary dictionary];
+    params[@"Page"] = @(page);
+    params[@"ItemNum"] = @20;
+    params[@"InquiryId"] = inquiryId;
+  
+    DEBUGLOG(@"%@\n%@",TRADE_BILL_LIST,params);
+    [FGNetworking requsetWithPath:TRADE_BILL_LIST params:params method:Post handleBlcok:^(id response, NSError *error) {
+         DEBUGLOG(@"%@\n%@",TRADE_BILL_LIST,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0 && [response[@"Data"] isKindOfClass:[NSArray class]]) {
+                
+                NSMutableArray *modelArr = [[NSMutableArray alloc] init];
+                for (int i = 0; i < [response[@"Data"] count]; i++) {
+                    StockModel *model = [StockModel mj_objectWithKeyValues:response[@"Data"][i]];
+                    model.stockType = StockAllType_BillDetail;
+                    [modelArr addObject:model];
+                }
+                !block ?: block(modelArr,nil);
+            }else{
+                !block ?: block(nil,NSLocalizedString(@"NO_MORE_PASS_STOCK", nil) );
+            }
+        }else{
+            !block ?: block(nil,NSLocalizedString(@"ERROR_NETWORK", nil) );
+//            NSLog(@"网络请求出错：%@",error);
+        }
+    }];
+}
+
+
+/** 票据资产 删除某行数据 */
++(void)requestDeleteStockWithBillId:(NSInteger)billId response:( void(^)(NSString *errorStr))block
+{
+    NSDictionary *params = @{
+                        @"OperType":@(707),
+                        @"Param":@{
+                               @"BillId":@(billId)
+                             }
+                        };
+
+    [FGNetworking requsetWithPath:BILLDEL params:params method:Post handleBlcok:^(id response, NSError *error) {
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if (statusCode == 0) {
+                block(nil);
+            }else{
+                block(NSLocalizedString(@"DELETE_FAIL",nil) );
+            }
+        
+        }else{
+             block(NSLocalizedString(@"ERROR_NETWORK",nil) );
+        }
+    
+    }];
+}
+
++(NSInteger)getBillIdWithModel:(id)model{
+    StockModel *stockModel = (StockModel*)model;
+    return stockModel.BillId.integerValue;
+}
+
+
++(NSInteger)getBillStatusWithModel:(id)model{
+    StockModel *stockModel = (StockModel*)model;
+    return stockModel.BillState.integerValue;
+}
+
+@end

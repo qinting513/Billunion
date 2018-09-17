@@ -1,0 +1,27 @@
+//
+//  QTAnnotation.m
+//  GaoDe
+//
+//  Created by QT on 17/2/10.
+//  Copyright © 2017年 QT. All rights reserved.
+//
+
+#import "QTAnnotation.h"
+
+@implementation QTAnnotation
+
+
+-(instancetype)initWithCoordinate:(CLLocationCoordinate2D)coordinate
+                            title:(NSString *)title
+                         subTitle:(NSString *)subTitle
+                        imageName:(NSString *)imageName{
+    if (self = [super init]) {
+        self.coordinate     = coordinate;
+        self.title          = title;
+        self.subtitle       = subTitle;
+        self.imageString    = imageName;
+    }
+    return self;
+}
+
+@end

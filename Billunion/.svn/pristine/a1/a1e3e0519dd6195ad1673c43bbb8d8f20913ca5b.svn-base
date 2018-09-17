@@ -1,0 +1,84 @@
+//
+//  Config.m
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import "Config.h"
+#import "UserModel.h"
+
+NSString * const TRADE_NOTIFICATION = @"TradeNotification";
+
+
+
+
+@implementation Config
+
+
+
++ (void)setCurrnetMobileNumber:(NSString *)mobileNumber{
+    [[NSUserDefaults standardUserDefaults] setObject:mobileNumber forKey:@"CurrnetAccount"];
+}
+
++ (NSString *)getCuttentMobileNumber{
+   return [[NSUserDefaults standardUserDefaults] objectForKey:@"CurrnetAccount"];
+}
+
++ (void)saveAccountWithKeyValue:(NSDictionary *)keyValue{
+    UserModel *model = [UserModel mj_objectWithKeyValues:keyValue];
+    if (!model.MobileNumber) {
+        return;
+    }
+    for (UserModel *userModel in [UserModel findAll]) {
+        if ([userModel.MobileNumber isEqualToString:model.MobileNumber]) {
+            model.pk = userModel.pk;
+            [model update];
+            [Config setCurrnetMobileNumber:model.MobileNumber];
+            return;
+        }
+    }
+    
+//    [UserModel deleteObjects:[UserModel findAll]];
+    [Config setCurrnetMobileNumber:model.MobileNumber];
+    [model saveOrUpdate];
+}
+
++ (UserModel *)getCurrentModel{
+    for (UserModel *mdoel in [UserModel findAll]) {
+        if ([mdoel.MobileNumber isEqualToString:[self getCuttentMobileNumber]]) {
+            return mdoel;
+        }
+    }
+    return nil;
+}
+
++ (NSString *)getSessionId{
+   UserModel *model = [self getCurrentModel];
+    return  model.SessionId;
+}
+
++ (NSNumber *)getUserType{
+    UserModel *model =  [self getCurrentModel];
+    return model.UserType;
+}
+
++ (NSNumber *)getCompanyId{
+    UserModel *model =  [self getCurrentModel];
+    return model.CompanyId;
+}
+
++ (NSString *)getAccountName{
+    UserModel *model =  [self getCurrentModel];
+    return model.AccountName;
+}
+
++ (NSString *)getMobileNumber{
+    UserModel *model =  [self getCurrentModel];
+    return model.MobileNumber;
+}
+
+//+ (void)judge
+
+@end

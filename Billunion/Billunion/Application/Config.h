@@ -1,0 +1,86 @@
+//
+//  Config.h
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import <Foundation/Foundation.h>
+
+#define WIDTH [UIScreen mainScreen].bounds.size.width
+#define HEIGHT [UIScreen mainScreen].bounds.size.height
+
+#define MainColor [UIColor colorWithRGBHex:0x141414]
+#define SeparatorColor [UIColor colorWithRGBHex:0x333333]
+
+#define KScreenSize [UIScreen mainScreen].bounds.size
+#define KScreenwidth [UIScreen mainScreen].bounds.size.width
+#define KScreenheight [UIScreen mainScreen].bounds.size.height
+#define IsIphone6P KScreenSize.width==414
+#define IsIphone6 KScreenSize.width==375
+#define IsIphone5S KScreenSize.height==568
+#define IsIphone5 KScreenSize.height==568
+//456字体大小
+#define KIOS_Iphone456(iphone6p,iphone6,iphone5s,iphone5,iphone4s) (IsIphone6P?iphone6p:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?iphone5s:iphone4s)))
+//宽高
+#define KIphoneSize_Widith(iphone6) (IsIphone6P?1.104*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.853*iphone6:0.853*iphone6)))
+#define KIphoneSize_Height(iphone6) (IsIphone6P?1.103*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.851*iphone6:0.720*iphone6)))
+
+#define SYSTEM_VERSION_GREATER_THAN(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+
+/** -------- 定位相关 ------------ */
+/** 存储当前选中的城市 */
+#define kCurrentCityName  @"kCurrentCityName"
+/** 当前城市 */
+#define kCurrentCity [[NSUserDefaults standardUserDefaults] objectForKey:kCurrentCityName]
+/** 存储当前详细地址 */
+#define kDetailAddressName  @"kDetailAddressName"
+#define kDetailAddress [[NSUserDefaults standardUserDefaults] objectForKey:kDetailAddressName]
+/** 当前城市变化的通知 */
+#define kCurrentCityChangedNotification @"kCurrentCityChangedNotification"
+
+#define  kCurrentVersionName @"kCurrentVersionName"
+#define  kCurrentVersion [[NSUserDefaults standardUserDefaults] objectForKey:kCurrentVersionName]
+
+
+#define kAcceptor         @"kAcceptor"
+#define kDueTimeRange     @"kDueTimeRange"
+#define kAddress          @"kAddress"
+#define kRange            @"kRange"
+#define kBillType         @"kBillType"
+#define kMapKey           @"621bd5612c3b7735fd771f2152619a09"
+
+/** 新的交易信息通知 */
+FOUNDATION_EXPORT NSString *const TRADE_NOTIFICATION;
+
+
+@interface Config : NSObject
+
++ (NSString *)getUUID;
++ (NSString *)getIPAddress;
+//当前的用户
++ (void)setCurrnetMobileNumber:(NSString *)mobileNumber;
++ (NSString *)getCuttentMobileNumber;
+
++ (void)saveAccountWithKeyValue:(NSDictionary *)keyValue;
+
++ (NSString *)getSessionId;
+
+//获取用户类型
++ (NSNumber *)getCompanyType;
+
++ (NSNumber *)getCompanyId;
+
++ (NSString *)getAccountName;
+
++ (NSString *)getMobileNumber;
++ (NSString *)getEmail;
+
++ (BOOL)judgeHasAccountWith:(NSString *)accoun;
++ (BOOL)juddgeFirstLogin;
+
++ (void)setTags:(NSSet *)tags alias:(NSString *)alias;
+
+
+@end

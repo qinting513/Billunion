@@ -1,0 +1,44 @@
+//
+//  DistanceView.m
+//  Billunion
+//
+//  Created by QT on 2017/3/28.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "DistanceView.h"
+
+@implementation DistanceView
+
+-(instancetype)initWithFrame:(CGRect)frame{
+    if (self = [super initWithFrame:frame]) {
+        NSString *str = @"全程共:9999.99km";
+        CGFloat labelH = 15;
+        CGFloat width = [str getWidthWithLimitHeight:labelH fontSize:13.0];
+        CGFloat left = 10;
+        
+        self.frame = CGRectMake(0,0,width+left*2,60);
+        self.backgroundColor = [UIColor colorWithRGBHex:0x90111111];
+        
+        for(int i = 0;i<2;i++){
+            UILabel *label = [[UILabel alloc]initWithFrame:CGRectMake(left,12+(labelH+10)*i, self.width-left*2, labelH)];
+            label.textColor = [UIColor colorWithRGBHex:0xffffff];
+            label.textAlignment = NSTextAlignmentLeft;
+            label.font = [UIFont systemFontOfSize:13.0f];
+            label.tag = i ;
+            [self addSubview:label];
+        }
+    }
+    return self;
+}
+
+/** 设置distanceView上的label显示的内容 */
+-(void)setDistanceViewWithDistance:(NSString*)dis hour:(NSString *)hour
+{
+    UILabel *label = self.subviews.firstObject;
+    label.text = dis;
+    UILabel *label1 = self.subviews.lastObject;
+    label1.text = hour;
+}
+
+@end

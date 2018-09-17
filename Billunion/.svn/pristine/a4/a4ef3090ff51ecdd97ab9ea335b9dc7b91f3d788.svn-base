@@ -1,0 +1,230 @@
+
+//
+//  TradeViewController.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/20.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "TradeViewController.h"
+#import "StockAddController.h"
+#import "KLineViewController.h"
+#import "CityViewController.h"
+
+#import "StockView.h"
+#import "AskBuyTableView.h"
+
+#import "TradeViewModel.h"
+#import "StockViewProtocol.h"
+#import "StockSelectViewController.h"
+#import "AssetsViewModel.h"
+#import "InfoMationView.h"
+
+@interface TradeViewController ()<StockViewProtocol,AskBuyTableViewDelegate>{
+   
+}
+
+@property (nonatomic,strong) UIButton *rightBarBtn;
+
+@property (nonatomic, strong) TradeViewModel *tradeViewModel;
+@property (nonatomic,strong)  InfoMationView *infomationView;
+@property (nonatomic,strong)  StockView *currentStockView;
+
+@end
+
+@implementation TradeViewController
+
+
+- (TradeViewModel *)tradeViewModel{
+    if (!_tradeViewModel) {
+        _tradeViewModel = [[TradeViewModel alloc] init];
+    }
+    return _tradeViewModel;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    /** 默认给票据行情的 */
+    NSArray * subTitles =  [Tools getSubTitlesWithStockAllType:StockAllType_Tade_askSell];
+    
+    [self layoutMainSelectViweWithTitles:@[NSLocalizedString(@"Trade",nil)] ];
+    [self layoutSelectViweWithTitles:@[NSLocalizedString(@"AskBuy",         nil),
+                                       NSLocalizedString(@"AskSell",        nil),
+                                       NSLocalizedString(@"SpecifiedBuy",   nil),
+                                       NSLocalizedString(@"SpecifiedSell",  nil)] ];
+    
+    [self layoutScrollViewWithSubTitles:subTitles];
+    
+    AskBuyTableView *askBuyTableView =  (AskBuyTableView *)[self getStockViewWithIndex:0];
+    askBuyTableView.askBuyDelegate = self;
+}
+
+
+-(void)addRightBarButtonItem:(NSInteger)index
+{
+    self.rightBarBtn.tag = index;
+    if( index == 3 || index == 1){
+        if (index == 1 &&  ( [[Config getUserType] integerValue] != 1 ) ) {
+             self.rightBarBtn.hidden = YES;
+        }else{
+            self.rightBarBtn.hidden = NO;
+        }
+    }else{
+        self.rightBarBtn.hidden = YES;
+    }
+}
+
+
+-(UIButton *)rightBarBtn
+{
+    if (!_rightBarBtn) {
+        _rightBarBtn = [UIButton buttonWithTitle:NSLocalizedString(@"Select", nil) titleFont:13
+                                      titleColor:[UIColor colorWithRGBHex:0xffffff]
+                                          target:self
+                                          action:@selector(rightBarBtnClick:)];
+        [_rightBarBtn setTitle:NSLocalizedString(@"Finish", nil) forState:UIControlStateSelected];
+        _rightBarBtn.frame = CGRectMake(0, 0, 80, 44);
+        _rightBarBtn.titleEdgeInsets = UIEdgeInsetsMake(0, 0, 0, -30);
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:self.rightBarBtn];
+    }
+    return _rightBarBtn;
+}
+
+
+-(void)rightBarBtnClick:(UIButton *)btn{
+    
+    if(btn.tag == 1 || btn.tag == 3 ){
+        self.currentStockView.rightBtnIsSelected = !self.currentStockView.rightBtnIsSelected;
+        self.rightBarBtn.selected =  self.currentStockView.rightBtnIsSelected;
+        if(self.rightBarBtn.selected){
+            /** 点击选择操作，显示出左边可选的圈圈 */
+            [self selectedBtnClickReloadTableView:1];
+        }else{
+            /** 点击完成 */
+            [self selectedBtnClickReloadTableView:2];
+            if ( self.currentStockView.selectBtnArray.count != 0) {
+                [self pushToStockSelectViewControllerWithSelectIndexArray:self.currentStockView.selectBtnArray];
+            }
+        }
+    }
+}
+
+/** 根据右上角 选择按钮 的点击 来刷新  flag=1 是点击选择操作  flag=2是点击完成操作 */
+-(void)selectedBtnClickReloadTableView:(NSInteger)flag{
+    self.currentStockView.transactionType = (flag == 1) ? TransactionTypeMultiple : TransactionTypeSingle;
+    [self.currentStockView  tableViewReloadData];
+}
+
+- (void)subSelectedWithPage:(NSInteger)page{
+    UIView *currentView =  [self getStockViewWithIndex:page];
+    if ([currentView isKindOfClass:[StockView class]]) {
+         self.currentStockView  = (StockView *)currentView;
+        if ( self.currentStockView .dataArray.count == 0) {
+             self.currentStockView .delegate = self;
+            [self requestAssetsList: self.currentStockView  billType:1 page:1 isPullUp:NO];
+        }
+        self.rightBarBtn.selected = self.currentStockView.rightBtnIsSelected;
+    }else{
+        ((AskBuyTableView *)currentView).askBuyDelegate = self;
+    }
+    
+}
+
+#pragma mark - 网络请求对结果
+- (void)requestAssetsList:(StockView *)stockView
+                 billType:(NSInteger)billType
+                     page:(NSInteger)page
+                 isPullUp:(BOOL)isPullUp{
+    
+    NSDictionary *params = @{
+                             @"Page":@(page),
+                             @"ItemNum":@(20),
+                             @"BillType":@[ @(billType) ],
+                             };
+    [AssetsViewModel requestPropertyBillListWithParams:params
+                                          stockAllType:StockAllType_Tade_askSell
+                                              response:^(NSArray *dataArr, NSString *errorStr) {
+      [stockView handleResponseWithDataArray:dataArr
+                                   errorStr:errorStr
+                                   isPullUp:isPullUp];
+            }];
+    
+}
+
+#pragma mark - AskBuyTableViewDelegate
+- (void)oKClickWithAskBuyDict:(NSMutableDictionary *)askBuyDict{
+    __weak typeof(self) weakSelf = self;
+    [self.tradeViewModel tradeBuyerInquiryAddWithAskBuyDict:askBuyDict response:^(NSString *message) {
+        [weakSelf.view showWarning:message];
+    }];
+}
+
+
+
+- (void)stockDidSelectWithIndexPath:(NSIndexPath *)indexPath
+                          stockView:(id)view{
+    
+   // NSInteger tag = ((StockView *)view).tag;
+    // NSLog(@"indexPath:%@ tableViewTag:%ld",indexPath,tag);
+    if (self.rightBarBtn.tag == 1) {
+        if (![[Config getUserType]  isEqual: @1]) {
+            [self pushToStockSelectViewControllerWithSelectIndexArray:@[@(indexPath.row)]];
+        }
+    }
+}
+
+-(InfoMationView *)infomationView
+{
+    if (!_infomationView) {
+        _infomationView = [[InfoMationView alloc]initWithFrame:self.view.bounds];
+        [self.view addSubview:_infomationView];
+    }
+    return _infomationView;
+}
+
+
+// 跳转去 选择地址
+- (void)addressSelect:(NSArray *)addressArr AskBuyTableView:(AskBuyTableView *)aksTableView{
+    
+    CityViewController *controller = [[CityViewController alloc] init];
+    controller.hotCityArray = [addressArr mutableCopy];
+    controller.currentCityString = [[NSUserDefaults standardUserDefaults] objectForKey:kCurrentCityName];
+    controller.isAddStock = NO;
+    controller.finishSelectCityBlock = ^(NSArray *cityArray){
+        [aksTableView setAddressLabelWith:cityArray];
+    };
+    [self.navigationController pushViewController:controller animated:YES];
+}
+
+//跳转到票据编辑成交页面
+- (void)pushToStockSelectViewControllerWithSelectIndexArray:(NSArray *)selectIndexArray{
+    NSMutableArray *arr = [NSMutableArray array];
+    for (NSNumber *index in selectIndexArray) {
+        [arr addObject:self.currentStockView.dataArray[index.integerValue] ];
+    }
+    StockSelectViewController *selectCtl = [[StockSelectViewController alloc] init];
+    if (self.rightBarBtn.tag == 1) {
+        selectCtl.tradeConfigViewType = TradeConfigViewType_sellerInquiry;
+    }else{
+        selectCtl.tradeConfigViewType = TradeConfigViewType_sellerSpecify;
+    }
+   
+    selectCtl.dataArray = arr;
+    [self.navigationController pushViewController:selectCtl animated:YES];
+}
+
+
+#pragma mark - 上拉 下拉刷新
+-(void)stockViewHeaderRefresh:(StockView *)stockView
+{
+    [self requestAssetsList:stockView billType:1 page:1 isPullUp:NO];
+}
+-(void)stockViewFooterRefresh:(StockView *)stockView
+{
+    stockView.numPage ++;
+    [self requestAssetsList:stockView billType:1 page:stockView.numPage isPullUp:YES];
+}
+
+@end

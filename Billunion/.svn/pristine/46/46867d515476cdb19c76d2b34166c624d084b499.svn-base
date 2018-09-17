@@ -1,0 +1,27 @@
+//
+//  StatusCode.m
+//  Billunion
+//
+//  Created by QT on 2017/3/24.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "StatusCode.h"
+
+@implementation StatusCode
+
++(NSString *)getErrorStringWithCode:(NSNumber*)code{
+ 
+    NSString *str = @"";
+    switch (code.integerValue) {
+        case 4062:
+             str = @"指定的交易方不存在";
+            break;
+            
+        default:
+            break;
+    }
+    return str;
+}
+
+@end

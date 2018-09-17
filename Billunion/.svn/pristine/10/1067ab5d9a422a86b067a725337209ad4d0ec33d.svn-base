@@ -1,0 +1,23 @@
+//
+//  ShareViewModel.h
+//  Billunion
+//
+//  Created by Waki on 2017/2/8.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
+@interface ShareViewModel : NSObject
+
+@property (nonatomic,strong) UIImage *image1;
+@property (nonatomic,strong) UIImage *image2;
+
++ (ShareViewModel *)shareInstance;
+
+//保存图片
+-(void)saveImageDocuments:(UIImage *)image imageName:(NSString *)name;
+// 读取并存贮到相册
+-(UIImage *)getDocumentImageWithName:(NSString *)name;
+@end

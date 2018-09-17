@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "890920e8-7d19-e44e-9cc0-0b3cd9024902++1662",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "890920e8-7d19-e44e-9cc0-0b3cd9024902++1662" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "890920e8-7d19-e44e-9cc0-0b3cd9024902++1662" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "FCFC7104-984E-42CF-9B4F-EF6DAA8543BE",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "890920e8-7d19-e44e-9cc0-0b3cd9024902++1662" : "Billunion\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Billunion",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Billunion.xcworkspace",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/192.168.0.254\/svn\/1.billunion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "890920e8-7d19-e44e-9cc0-0b3cd9024902++1662"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+
+
+//
+//  ShareViewModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/2/8.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "ShareViewModel.h"
+
+@implementation ShareViewModel
+
+
++ (ShareViewModel *)shareInstance{
+    static ShareViewModel *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [self new];
+    });
+    return instance;
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        
+    }
+    return self;
+}
+
+//保存图片
+-(void)saveImageDocuments:(UIImage *)image imageName:(NSString *)name{
+    //拿到图片
+    UIImage *imagesave = image;
+    NSString *path_sandox = NSHomeDirectory();
+    NSString *pathName = [NSString stringWithFormat:@"/Documents/%@.png",name];
+    //设置一个图片的存储路径
+    NSString *imagePath = [path_sandox stringByAppendingString:pathName];
+    //把图片直接保存到指定的路径（同时应该把图片的路径imagePath存起来，下次就可以直接用来取）
+    [UIImagePNGRepresentation(imagesave) writeToFile:imagePath atomically:YES];
+        // 图片保存相册
+    UIImageWriteToSavedPhotosAlbum(image, self, nil, nil);
+  
+}
+// 读取并存贮到相册
+-(UIImage *)getDocumentImageWithName:(NSString *)name{
+    
+    // 读取沙盒路径图片
+    NSString *aPath3=[NSString stringWithFormat:@"%@/Documents/%@.png",NSHomeDirectory(),name];
+    // 拿到沙盒路径图片
+    UIImage *imgFromUrl3=[[UIImage alloc]initWithContentsOfFile:aPath3];
+    
+    return imgFromUrl3;
+}
+
+@end

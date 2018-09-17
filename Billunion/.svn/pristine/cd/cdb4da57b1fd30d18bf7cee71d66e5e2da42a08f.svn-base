@@ -1,0 +1,19 @@
+//
+//  Config.m
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import "Config.h"
+
+
+NSString * const TRADE_NOTIFICATION = @"TradeNotification";
+
+
+
+
+@implementation Config
+
+@end

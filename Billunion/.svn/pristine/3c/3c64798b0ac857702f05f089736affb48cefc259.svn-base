@@ -1,0 +1,357 @@
+//
+//  Tools.m
+//  PCStock
+//
+//  Created by Waki on 2016/12/27.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import "Tools.h"
+
+
+
+@implementation Tools
+
++ (NSString *)getTradeStatus:(NSInteger)index{
+    switch (index) {
+        case 0: return @"待完成";
+        case 1: return @"带完成";
+        case 2:  return @"已完成";
+        default: return @"未知";
+    }
+}
+
++ (NSString *)getTradeModel:(NSInteger)index{
+    switch (index) {
+        case 1: return @"挑票成交";
+        case 2:  return @"批量成交";
+        default: return @"-";
+    }
+}
+
++ (NSString *)getBillState:(NSInteger)index{
+    switch (index) {
+        case 0: return @"待发布";
+        case 1:  return @"待交易";
+        case 2:  return @"交易中";
+        case 3: return @"交易结束";
+        default: return @"未知";
+    }
+}
+
+
+//承兑人类型 银行
++ (NSString *)getAcceptor1:(NSInteger)index{
+    //    NSString *acceptor;
+    //    switch (index) {
+    //        case 1: acceptor = @"政策银行";  break;
+    //        case 2: acceptor = @"国有大行";  break;
+    //        case 3: acceptor = @"股份制行";  break;
+    //        case 4: acceptor = @"省级城商";  break;
+    //        case 5: acceptor = @"省级农商";  break;
+    //        case 6: acceptor = @"外资银行";  break;
+    //        case 7: acceptor = @"民营银行";  break;
+    //        case 8: acceptor = @"地市城商";  break;
+    //        case 9: acceptor = @"地市农商";  break;
+    //        case 10: acceptor = @"村镇农信";  break;
+    //        default: acceptor = @"未知";    break;
+    //    }
+    NSArray *arr = @[@"政策银行",@"国有大行",@"股份制行",@"省级城商",@"省级农商",@"外资银行",@"民营银行",@"地市城商",@"地市农商",@"村镇农信",@"财务公司"];
+    if (index<arr.count && index>0) {
+        return arr[index-1];
+    }else{
+        return @"未知";
+    }
+    
+}
+
+//承兑人类型  非银行
++ (NSString *)getAcceptor2:(NSInteger)index{
+    NSString *acceptor;
+    switch (index) {
+        case 1: acceptor = @"中央企业";  break;
+        case 2: acceptor = @"国有控股";  break;
+        case 3: acceptor = @"地方国企";  break;
+        case 4: acceptor = @"民营企业";  break;
+        default: acceptor = @"未知";    break;
+    }
+    return acceptor;
+    
+}
+
+
++ (NSString *)getBillType:(NSInteger)index{
+    switch (index) {
+        case 1: return NSLocalizedString(@"PBankNote", nil);
+        case 2: return NSLocalizedString(@"EBankNote", nil);
+        case 3: return NSLocalizedString(@"EBusinessNote", nil);
+        default:  return NSLocalizedString(@"Unknown", nil);
+    }
+}
+
++ (NSString *)getENoteDueTimeString:(NSInteger)index{
+    switch (index) {
+        case 1:  return @"一天";
+        case 2:  return @"七天";
+        case 3:  return @"一月期";
+        case 4:  return @"二月期";
+        case 5:  return @"三月期";
+        case 6:  return @"四月期";
+        case 7:  return @"五月期";
+        case 8:  return @"六月期";
+        case 9:  return @"七月期";
+        case 10:  return @"八月期";
+        case 11:  return @"九月期";
+        case 12:  return @"十月期";
+        case 13:  return @"十一月期";
+        case 14:  return @"十二月期";
+        case 15:  return @"挂历票";
+        default: return @"未知";
+            break;
+    }
+}
+
++ (NSString *)getPNoteDueTimeString:(NSInteger)index{
+    switch (index) {
+        case 3:  return @"一月期";
+        case 4:  return @"二月期";
+        case 5:  return @"三月期";
+        case 6:  return @"四月期";
+        case 7:  return @"五月期";
+        case 8:  return @"六月期";
+        case 15:  return @"挂历票";
+        default: return @"未知";
+            break;
+    }
+}
+
++ (NSArray *)getDueTimeRangeWithBillType:(NSInteger)billType{
+    if (billType == 2) {
+        return @[@"一天",@"七天",@"一月期",@"二月期",@"三月期",@"四月期",@"五月期",@"六月期",@"七月期",@"八月期",@"九月期",@"十月期",@"十一月期",@"十二月期"];
+    }else{
+        return @[@"一月期",@"二月期",@"三月期",@"四月期",@"五月期",@"六月期"];
+    }
+}
+
++ (NSArray *)getAcceptorsWithBillType:(NSInteger)billType{
+    if (billType == 1) {
+        return  @[@"政策银行",@"国有大行",@"股份制行",@"省级城商",@"省级农商",@"外资银行",@"民营银行",@"地市城商",@"地市农商",@"村镇农信"];
+    }else{
+        return  @[@"政策银行",@"国有大行",@"股份制行",@"省级城商",@"省级农商",@"外资银行",@"民营银行",@"地市城商",@"地市农商",@"村镇农信",@"财务公司",@"中央企业",@"国有控股",@"地方国企",@"民营企业"];
+    }
+}
+
++(NSDictionary*)getAcceptorTypeWithBillType:(NSInteger)billType btnTitle:(NSString *)title{
+    NSMutableDictionary* dict = [NSMutableDictionary dictionary];
+    NSArray *titles = [self getAcceptorsWithBillType:billType];
+    NSInteger index = [titles indexOfObject:title];
+  if ([title isEqualToString:@"中央企业"]){
+        index = 0;
+        dict[kBillType] = @(3);
+    }else if ([title isEqualToString:@"国有控股"]){
+        index = 1;
+        dict[kBillType] = @(3);
+    }else if ([title isEqualToString:@"地方国企"]){
+        index = 2;
+        dict[kBillType] = @(3);
+    }else if ([title isEqualToString:@"民营企业"]){
+        index = 3;
+        dict[kBillType] = @(3);
+    }
+    dict[kAcceptor] = @(index+1);
+    return [dict copy];
+}
+
++(NSInteger)getDueTimeRangeTypeWithBillType:(NSInteger)billType btnTitle:(NSString *)title{
+    NSArray *arr = [self getDueTimeRangeWithBillType:billType];
+    NSInteger index = [arr indexOfObject:title];
+    if (billType == 1) { // 纸票从3开始
+        index = index+3;
+    }else{
+        index = index+1;//  start from 1
+    }
+    return index;
+}
+
+
++ (NSString *)getExamineState:(NSInteger)index{
+    switch (index) {
+        case 0:  return @"待审核";
+        case 1:  return @"已审核";
+        case 2:  return @"审核不通过";
+        default: return @"未知";
+            break;
+    }
+}
+
++(void)saveUserLoginStatus:(NSString*)login{
+    [[NSUserDefaults standardUserDefaults] setObject:login forKey:@"userLogin"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
++(BOOL)isUserLogin{
+    NSString *str = [[NSUserDefaults standardUserDefaults] objectForKey:@"userLogin"];
+    if ([str isEqualToString:@"YES"]) {
+        return YES;
+    }else{
+        return  NO;
+    }
+}
+
++(NSArray *)getSubTitlesWithStockAllType:(StockAllType)allType{
+    NSString *Amount            = NSLocalizedString(@"Amount", nil);
+    NSString *DiscountRate      = NSLocalizedString(@"DiscountRate", nil);
+    NSString *BillType          = NSLocalizedString(@"BillType", nil);
+    NSString *Acceptor          = NSLocalizedString(@"Acceptor", nil);
+    NSString *DueTimeRange      = NSLocalizedString(@"DueTimeRange", nil); // 票据期限类型
+    NSString *RemainingDays     = NSLocalizedString(@"RemainingDays", nil); // 剩余天数
+    NSString *TradeState        = NSLocalizedString(@"TradeState", nil);    // 交易状态
+    NSString *AuditState        = NSLocalizedString(@"AuditState", nil); // 审核状态
+    NSString *StockAddress      = NSLocalizedString(@"StockAddress", nil);
+    NSString *Counterpart       = NSLocalizedString(@"Counterpart", nil);
+    NSString *Holder            = NSLocalizedString(@"Holder", nil);
+    NSString *InquiryParty      = NSLocalizedString(@"InquiryParty", nil);
+    NSString *DeliveryTime      = NSLocalizedString(@"DeliveryTime", nil);
+    NSString *TradeType         = NSLocalizedString(@"TradeType", nil);
+    NSArray *subTitles = @[];
+    switch (allType) {
+        case StockAllType_MyBuying_askBuying:
+        case StockAllType_MyBuying_specifiedBuying:
+        case StockAllType_MyBuying_quoteBuying:
+        case StockAllType_MyBuying_beSpecifiedSell:
+            subTitles =  @[
+                           @[  //纸票
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress],
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress,Counterpart],
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress],
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress,Counterpart],
+                            ],
+                           @[  // 电票
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,Counterpart],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,Counterpart],
+                            ],
+                           ];
+            break;
+        case StockAllType_MySell_askSell:
+        case StockAllType_MySell_specifiedSell:
+        case StockAllType_MySell_quoteSell:
+        case StockAllType_MySell_beSpecifiedBuying:
+            subTitles =  @[
+                           @[  //纸票
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress,Counterpart],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,StockAddress,Counterpart],
+                               ],
+                           @[  // 电票
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,Counterpart],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,TradeState,AuditState,Counterpart],
+                               ],
+                           ];
+
+            break;
+        case StockAllType_Seller_Market:
+        case StockAllType_Buyer_Market:
+            subTitles =  @[
+                            @[ //卖方市场
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder,StockAddress],
+                                @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder],
+                             ],
+                           
+                            @[  // 买方市场
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,StockAddress,DeliveryTime],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,DeliveryTime]
+                             ],
+                           ];
+            break;
+        case StockAllType_Tade_askSell:
+        case StockAllType_Tade_specifiedSell:
+            subTitles = @[
+                          @[
+                              @[Amount,Acceptor,BillType,DueTimeRange,RemainingDays,Holder,TradeState,StockAddress],
+                              @[Amount,Acceptor,BillType,DueTimeRange,RemainingDays,Holder,Holder,TradeState,StockAddress],
+                            ]
+                          ];
+            break;
+        case StockAllType_Assets:
+            subTitles = @[
+                          @[
+                              @[Amount,Acceptor,BillType,DueTimeRange,RemainingDays,Holder,TradeState,StockAddress],
+                              @[Amount,Acceptor,BillType,DueTimeRange,RemainingDays,Holder,TradeState]
+                              ]
+                          ];
+            break;
+        case StockAllType_TradingRecord_Seller_Market:
+        case StockAllType_TradingRecord_Buyer_Market:
+            subTitles =  @[
+                           @[
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder,TradeState,StockAddress,TradeType],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder,TradeState,TradeType],
+                            ],
+                           @[
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder,TradeState,StockAddress,TradeType],
+                               @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,InquiryParty,Holder,TradeState,TradeType],
+                            ],
+                           ];
+            break;
+        case StockAllType_Select_Trade:
+            subTitles = @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,Holder,TradeState,StockAddress];
+            break;
+        case StockAllType_BillDetail:
+            subTitles = @[Amount,DiscountRate,BillType,Acceptor,DueTimeRange,RemainingDays,StockAddress];
+            break;
+        default:
+            break;
+    }
+    
+    return subTitles;
+}
+
+
++(NSArray *)getMineTitles{
+    // return  @[@"账号信息",@"关于我们",@"问题反馈",@"检查更新",@"系统公告"];
+    return @[   NSLocalizedString(@"UserCenter", nil),
+                NSLocalizedString(@"AboutUs", nil),
+                NSLocalizedString(@"FeedbackProblems", nil),
+                NSLocalizedString(@"CheckUpdate", nil),
+                NSLocalizedString(@"SystemNotice", nil)];
+}
+
++(NSArray *)getMyProfileTitles{
+    return @[    NSLocalizedString(@"AccountName", nil),    NSLocalizedString(@"CompanyName", nil),
+                 NSLocalizedString(@"City", nil),           NSLocalizedString(@"E-mail", nil),
+                 NSLocalizedString(@"Phone", nil),          NSLocalizedString(@"TradeTimes", nil),
+                 NSLocalizedString(@"SuccessTimes", nil),   NSLocalizedString(@"FailTimes", nil),
+                 NSLocalizedString(@"SuccessAmount", nil),  NSLocalizedString(@"FailAmount", nil),
+                 NSLocalizedString(@"SuccessRate", nil),
+           ];
+}
++(NSArray*)getStockAddTitles{
+    return @[    NSLocalizedString(@"BillNum", nil),       NSLocalizedString(@"Acceptor", nil),
+                 NSLocalizedString(@"StockAmount", nil),   NSLocalizedString(@"ReleaseDate", nil),
+                 NSLocalizedString(@"ExpireDate", nil),    NSLocalizedString(@"DetailAddress", nil),
+                 NSLocalizedString(@"CurrentCity", nil),   NSLocalizedString(@"PositiveImage", nil),
+                 NSLocalizedString(@"BackImage", nil)
+                 ];
+}
++(NSArray*)getStockAddPlaceHolders{
+    return @[NSLocalizedString(@"FillInEightDigitBillNum", @""),
+             NSLocalizedString(@"FillInAcceptor", @""),
+             NSLocalizedString(@"AccurateToTwoDecimalPlaces", @""),
+             ];
+}
++(NSArray*)getLoginPlaceHolders{
+ 
+    return @[
+             NSLocalizedString(@"PhoneNumber", @""),
+             NSLocalizedString(@"Password", @""),
+             NSLocalizedString(@"VerifyCode", @""),
+             ];
+}
+
+
+@end

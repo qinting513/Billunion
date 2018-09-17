@@ -1,0 +1,25 @@
+//
+//  StockInfoViewController.h
+//  Billunion
+//
+//  Created by QT on 17/1/18.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "BaseViewController.h"
+
+
+//typedef NS_ENUM(NSInteger,MarketType)
+//{
+//    MarketTypeSeller, // 卖方
+//    MarketTypeBuyer // 买方
+//   
+//};
+
+
+
+@interface StockInfoViewController : BaseViewController
+
+ @property (nonatomic,assign) KLINE_TYPE kLineType;
+
+@end

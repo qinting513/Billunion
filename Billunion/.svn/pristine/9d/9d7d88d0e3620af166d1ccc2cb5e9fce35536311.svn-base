@@ -1,0 +1,234 @@
+//
+//  MoreIndexViewController.m
+//  Billunion
+//
+//  Created by QT on 17/1/4.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "MoreIndexViewController.h"
+#import "RateMarketViewController.h"
+#import "MoreIndexCollectionView.h"
+
+#import "UIScrollView+Refresh.h"
+#import "YYRrefreshControl.h"
+#import "YYRefreshFooterView.h"
+#import "MoreIndexViewModel.h"
+
+#define btnSpace 5
+#define bottomViewHeight 2
+#define kCellMargin 4
+#define kHeadViewHeight 101
+#define buttonTag 100
+#define collectionViewTag 600
+
+
+@interface MoreIndexViewController ()<UIScrollViewDelegate>
+
+@property (nonatomic,strong)UIScrollView *scrollView;
+
+@property (nonatomic,strong)UIView *titleView;
+@property (nonatomic,strong)UIView *bottomView;
+@property (nonatomic,strong)UIButton *preBtn;
+
+@property (nonatomic,strong) MoreIndexViewModel *moreIndexViewModel;
+
+@end
+
+@implementation MoreIndexViewController
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    self.navigationItem.titleView = self.titleView;
+    [self requestDataCompletion:nil];
+   
+}
+
+- (MoreIndexViewModel *)moreIndexViewModel{
+    if (!_moreIndexViewModel) {
+        _moreIndexViewModel = [[MoreIndexViewModel alloc] init];
+    }
+    return _moreIndexViewModel;
+}
+
+- (void)requestDataCompletion:(void(^)())block{
+
+    [self.moreIndexViewModel requestMarketRateResultListWithResponse:^(NSArray *dataArray, NSString *errorStr) {
+        !block ?: block();
+        if (errorStr == nil) {
+            ///** 此数组包含 银承纸票 银承电票 商承电票 的所有数据 根据BillType区分 */
+            for (int i = 0;i<dataArray.count;i++) {
+                id model = dataArray[i];
+                NSInteger billType = [[model valueForKey:@"BillType"] integerValue];
+                MoreIndexCollectionView *collectionView = (MoreIndexCollectionView *)[self getCollectionViewWithTag:(billType-1)];
+                collectionView.model = model;
+            }
+        }else{
+            [Hud showTipsText:errorStr];
+        }
+    }];
+}
+
+// 接收通知监听的方法
+- (void)headerRefresh:(YYRrefreshControl*)refreshControl{
+    [self requestDataCompletion:^{
+       [refreshControl endRefreshing];
+    }];
+}
+
+#pragma mark - 懒加载
+-(UIView*)titleView{
+    if (_titleView == nil)
+    {
+            CGFloat btnWidth = STRealX(180);
+            CGFloat viewHeight = 44;
+            NSArray *titles = @[NSLocalizedString(@"PBankNote", nil),
+                                NSLocalizedString(@"EBankNote", nil),
+                                NSLocalizedString(@"EBusinessNote", nil)];
+
+         _titleView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, WIDTH-50-30 , 44)];
+            for (int i = 0; i < titles.count; i++)
+            {
+                UIButton *button = [UIButton buttonWithTitle:titles[i] titleFont:14 titleColor:[UIColor colorWithRGBHex:0x93a6be] target:self action:@selector(tradingWaySelected:)];
+                button.frame = CGRectMake((btnWidth+btnSpace)*i, 0, btnWidth, viewHeight);
+                button.tag = buttonTag + i;
+                [button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+                [_titleView addSubview:button];
+                if (i == 0)
+                {
+                    button.selected = YES;
+                    self.preBtn = button;
+                    UIView* bottomView = [[UIView alloc] initWithFrame:CGRectMake(0, viewHeight-bottomViewHeight,btnWidth, bottomViewHeight)];
+                    bottomView.backgroundColor = [UIColor colorWithRGBHex:0x93a6be];
+                    bottomView.backgroundColor = [UIColor whiteColor];
+                    [_titleView addSubview:bottomView];
+                    self.bottomView = bottomView;
+                }
+            }
+        
+        [self layoutScrollViewWithSubTitles:titles];
+    }
+    
+    return _titleView;
+}
+
+#pragma mark - 点击或者滚动
+- (void)tradingWaySelected:(UIButton *)btn{
+    self.preBtn.selected = NO;
+    btn.selected = YES;
+    self.preBtn = btn;
+
+    NSInteger index = btn.tag - buttonTag;
+    [UIView animateWithDuration:0.3 animations:^{
+        _bottomView.frame = CGRectMake((btn.width+btnSpace)*index, btn.height-bottomViewHeight,btn.width, bottomViewHeight);
+    }];
+//    [_scrollView setContentOffset:CGPointMake((btn.tag-buttonTag)*WIDTH, 0) animated:YES];
+     [_scrollView scrollRectToVisible:CGRectMake(WIDTH*(btn.tag-buttonTag), 0, WIDTH, _scrollView.height) animated:YES];
+    UICollectionView *collectionView = [self getCollectionViewWithTag:(btn.tag - buttonTag)];
+    YYRrefreshControl *header = [self getYYRrefreshControlWith:collectionView];
+    [self headerRefresh:header];
+}
+
+- (void)layoutScrollViewWithSubTitles:(NSArray *)subTitles{
+    //配置scrollView
+    _scrollView =  [[UIScrollView alloc] initWithFrame:CGRectMake(0, 64, WIDTH,HEIGHT)];
+    _scrollView.contentSize = CGSizeMake(WIDTH*subTitles.count, HEIGHT);
+    _scrollView.delegate  = self;
+    _scrollView.pagingEnabled = YES;
+    _scrollView.showsHorizontalScrollIndicator = NO;
+    _scrollView.showsVerticalScrollIndicator = NO;
+    _scrollView.scrollEnabled = NO;
+    [self.view addSubview:_scrollView];
+    
+    for(int i=0; i<subTitles.count; i++)
+    {
+        [self createCollectionViewWithTitile:subTitles[i] andTag:i];
+    }
+
+}
+
+-(void)createCollectionViewWithTitile:(NSString *)title andTag:(int)tag
+{
+    CGFloat cellWH = (WIDTH - kCellMargin*2)/3;
+    UICollectionViewFlowLayout *fl = [[UICollectionViewFlowLayout alloc]init];
+    fl.itemSize = CGSizeMake(cellWH, cellWH);
+    fl.minimumLineSpacing = kCellMargin;
+    fl.minimumInteritemSpacing = kCellMargin;
+    fl.headerReferenceSize = CGSizeMake(WIDTH, kHeadViewHeight);
+    
+    CGRect frame = CGRectMake(WIDTH*tag, 4, WIDTH, HEIGHT-64-4);
+    MoreIndexCollectionView *collectionView = [[MoreIndexCollectionView alloc]initWithFrame:frame
+                                        collectionViewLayout:fl];
+    collectionView.scrollEnabled = YES;
+    collectionView.alwaysBounceVertical = YES;
+    collectionView.tag = tag + collectionViewTag;
+
+    YYRrefreshControl *refreshControl = [[YYRrefreshControl alloc] init];
+    refreshControl.tag =   collectionView.tag + 100;
+    [refreshControl addTarget:self action:@selector(headerRefresh:) forControlEvents:UIControlEventValueChanged];
+    [collectionView addSubview:refreshControl];
+    
+    __weak typeof(self) weakSelf = self;
+    collectionView.block = ^(UICollectionView *collectionView,NSNumber *acceptorType){
+        [weakSelf didSelectedWithCollectionView:collectionView acceptorType:acceptorType];
+    };
+    
+    [self.scrollView addSubview:collectionView];
+}
+
+- (void)didSelectedWithCollectionView:(UICollectionView *)collectionView
+                acceptorType:(NSNumber *)acceptorType{
+    NSInteger page = collectionView.tag - collectionViewTag;
+     RateMarketViewController *rateCtl = [[RateMarketViewController alloc] init];
+    rateCtl.acceptorType = acceptorType;
+    if (page == 0) {
+        rateCtl.rateMarketType = P_bank_note;
+    }else if (page == 1){
+        rateCtl.rateMarketType = E_bank_note;
+    }else{
+        rateCtl.rateMarketType = E_business_note;
+    }
+    [self.navigationController pushViewController:rateCtl animated:YES];
+}
+
+
+/**
+ 获取是哪一个collectionView
+
+ @param tag  0 银承纸票  1 银承电票  2 商城电票
+
+ @return  获取是哪一个collectionView
+ */
+-(UICollectionView *)getCollectionViewWithTag:(NSInteger)tag
+{
+    UIView *view = [self.scrollView viewWithTag:(tag+collectionViewTag)];
+    if ([view isKindOfClass:[UICollectionView class]]) {
+        return (UICollectionView *)view;
+    }
+    return nil;
+}
+
+
+-(YYRrefreshControl *)getYYRrefreshControlWith:(UICollectionView*)collectionView
+{
+    UIView *view = [collectionView viewWithTag:(collectionView.tag+100)];
+    if ([view isKindOfClass:[YYRrefreshControl class]]) {
+        return (YYRrefreshControl*)view;
+    }
+    return nil;
+}
+
+-(void)dealloc
+{
+    NSLog(@"UICollectionView: %s",__func__);
+//    for(int i=0; i<3; i++){
+//        UICollectionView *collectionView = [self getCollectionViewWithTag:i];
+//        YYRrefreshControl *header        = [self getYYRrefreshControlWith:collectionView];
+//        [collectionView removeObserver:header forKeyPath:@"contentOffset"];
+//        [header removeFromSuperview];
+//    }
+}
+
+@end

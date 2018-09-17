@@ -1,0 +1,47 @@
+//
+//  Config.h
+//  
+//
+//  Created by Waki on 2016/12/27.
+//
+//
+
+#import <Foundation/Foundation.h>
+
+#define WIDTH [UIScreen mainScreen].bounds.size.width
+#define HEIGHT [UIScreen mainScreen].bounds.size.height
+
+#define MainColor [UIColor colorWithRGBHex:0x141414]
+#define SeparatorColor [UIColor colorWithRGBHex:0x333333]
+
+#define KScreenSize [UIScreen mainScreen].bounds.size
+#define KScreenwidth [UIScreen mainScreen].bounds.size.width
+#define KScreenheight [UIScreen mainScreen].bounds.size.height
+#define IsIphone6P KScreenSize.width==414
+#define IsIphone6 KScreenSize.width==375
+#define IsIphone5S KScreenSize.height==568
+#define IsIphone5 KScreenSize.height==568
+//456字体大小
+#define KIOS_Iphone456(iphone6p,iphone6,iphone5s,iphone5,iphone4s) (IsIphone6P?iphone6p:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?iphone5s:iphone4s)))
+//宽高
+#define KIphoneSize_Widith(iphone6) (IsIphone6P?1.104*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.853*iphone6:0.853*iphone6)))
+#define KIphoneSize_Height(iphone6) (IsIphone6P?1.103*iphone6:(IsIphone6?iphone6:((IsIphone5S||IsIphone5)?0.851*iphone6:0.720*iphone6)))
+
+
+
+#define kAcceptor        @"Acceptor"
+#define kDueTimeRange    @"DueTimeRange"
+#define kAddress         @"Address"
+#define kRange           @"Range"
+#define kBillType        @"BillType"
+#define kCurrentCityName  @"kCurrentCityName"
+
+/** 新的交易信息通知 */
+FOUNDATION_EXPORT NSString *const TRADE_NOTIFICATION;
+
+
+@interface Config : NSObject
+
+
+
+@end

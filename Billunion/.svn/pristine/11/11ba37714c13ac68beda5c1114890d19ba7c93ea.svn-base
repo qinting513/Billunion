@@ -1,0 +1,210 @@
+/* 
+  Localizable.strings
+  Billunion
+
+  Created by QT on 2017/3/20.
+  Copyright © 2017年 JM. All rights reserved.
+*/
+
+/* Login and Register */
+"Visitor"           = "Visitor";
+"ForgetPassword"    = "ForgotPwd?";
+"Login"             = "Login";
+"PhoneNumber"       = "PhoneNumber";
+"Password"          = "Password";
+"VerifyCode"        = "VerifyCode";
+"GetCode"           = "GetCode";
+"Submit"            = "Submit";
+"Confirm"           = "Confirm";
+"NewPassword"       = "NewPassword";
+"ConfirmPassword"   = "ConfirmPassword";
+
+/* 首页 */
+"Home"    = "Home";
+"MyBuy"   = "MyBuy" ;
+"MySell"  = "MySell";
+
+"NearStock"     = "NearStock";
+"Market"        = "Market";
+"Trade"         = "Trade";
+"Assets"        = "Assets";
+"Record"        = "Record";
+"Index"         = "Index";
+"Abstract"      = "Abstract";
+"More"          = "More";
+"YinCheng"      = "BankNote";
+"ShangCheng"    = "BusinessNote";
+"TodayTrade"    = "TodayTrade";
+"TotalTrade"    = "TotalTrade";
+
+
+"Billion"           = "Billion";
+"PaperTicket"       = "pDraft";
+"ElectricTicket"    = "eDraft";
+"SellerMarket"      = "Seller";
+"BuyerMarket"       = "Buyer";
+"Filter"            = "Filter" ;
+"Reset"             = "Reset";
+"Select"            = "Select";
+"Finish"            = "Finish";
+"AddStock"          = "AddStock";
+
+"AskBuy"            = "AskBuy";
+"SpecifiedBuy"      = "SpecifyBuy";
+"QuoteBuy"          = "QuoteBuy";
+"BeSpecifiedSell"   = "BeSpecifySell";
+
+"AskSell"           = "AskSell";
+"SpecifiedSell"     = "SpecifiedSell";
+"QuoteSell"         = "QuoteSell";
+"BeSpecifiedBuy"    = "BeSpecifiedBuy";
+
+// 我的
+"Me"                = "Me";
+"UserCenter"        = "UserCenter";
+"AboutUs"           = "AboutUs";
+"FeedbackProblems"  = "FeedbackProblems";
+"CheckUpdate"       = "CheckUpdate";
+"SystemNotice"      = "SystemNotice";
+"SystemInform"      = "SystemInform";
+"Logout"            = "Logout" ;
+"LogoutSuccess"     = "LogoutSuccess";
+"LogoutFail"        = "LogoutFail" ;
+"Tips"              = "Tips";
+"Sure"              = "Sure";
+"InputYourOpinion"  = "Input Your Opinion...";
+
+// 用户中心的
+"AccountName"           = "AccountName";
+"CompanyName"           = "Company";
+"City"                  = "City";
+"E-mail"                = "E-mail";
+"Phone"                 = "Phone";
+"TradeTimes"            = "TradeTimes";
+"SuccessTimes"          = "SuccessTimes";
+"FailTimes"             = "FailTimes";
+"SuccessAmount"         = "SuccessAmount";
+"FailAmount"            = "FailAmount";
+"SuccessRate"           = "SuccessRate";
+"Counterpart"           = "Counterpart";
+
+// 票据添加
+"BillNum"               = "BillNum";
+"Acceptor"              = "Acceptor";
+"StockAmount"           = "Amount";
+"ReleaseDate"           = "ReleaseDate";
+"ExpireDate"            = "ExpireDate";
+"DetailAddress"         = "DetailAddress";
+"CurrentCity"           = "City";
+"PositiveImage"         = "PositivePicture";
+"BackImage"             = "BackPicture";
+"Camera"                = "Camera";
+"PhotoAlbum"            = "PhotoAlbum";
+"HavePicture"           = "HavePicture";
+"FillInEightDigitBillNum"       = "FillInEightDigitBillNum";
+"FillInAcceptor"                = "FillInAcceptor";
+"AccurateToTwoDecimalPlaces"    = "AccurateToTwoDecimalPlaces";
+
+"PBankNote"         = "PBankNote";
+"EBankNote"         = "EBankNote";
+"EBusinessNote"     = "EBusinessNote";
+
+// 产品编号
+"ProductCode"       = "ProductCode";
+"Amount"            = "Amount";
+"DiscountRate"      = "Discount";
+"BillType"          = "BillType";
+"Holder"            = "Holder";
+"TradeState"        = "TradeState";
+"StockAddress"      = "StockAddress";
+"DueTimeRange"      = "DueTimeRange";
+"RemainingDays"     = "RemainingDays";
+"DeliveryTime"      = "DeliveryTime";
+"TradeType"         = "TradeType";
+"AuditState"        = "AuditState"; // 审核状态
+"Counterpart"       = "Counterpart"; // 交易对手方
+"InquiryParty"      = "InquiryParty";
+"QuoteParty"        = "QuoteParty";
+//// 按钮
+"Selling"       = "Selling";
+"Buying"        = "Buying";
+"StockDistance" = "Distance";
+"UndoStock"     = "Undo";
+"ModifyOffer"   = "ModifyOffer";
+"UndoOffer"     = "UndoOffer";
+"CancelTrade"   = "Cancel";
+"CloseType"     = "CloseType";
+
+"SelectedStock"         = "SelectedStock";
+"IsAnonymous"           = "Anonymous?";
+"YES"                   = "YES";
+"NO"                    = "NO";
+"Delete"                = "Delete";
+"Edit"                  = "Edit";
+"DefaultAddress"        = "DefaultAddress";
+"SelectedAddress"       = "SelectedAddress";
+"SelectedCity"          = "SelectedCity" ;
+"CurrentLocation"       = "CurrentLocation";
+
+
+// 其他
+"Unknown" = "Unknown";
+"DISCOUNTRATE_ERROR"   = "DiscountRate Format Error";
+"DISCOUNTRATE_NONE"    = "Some stock have no discountRate";
+"IS_DELETE_ADDRESS"    = "Are you want to delete?";
+"SURE_DEL"             = "Sure";
+"CANCEL_DEL"           = "Cancel";
+"ADD_NEW_ADDRESS"      = "Add Address";
+"NO_MORE_PASS_STOCK"   = "无符合交易要求的票据";
+
+"CANT_TRADE_YOURSELF"          =  "不能与自己进行交易哦！";
+"CANT_REPEAT_BUY"              = "不能重复进行买入！";
+"NONE_OFFER"                   =  "您还没有进行报价哦！";
+"IS_CANCEL_OFFER"              = "确定需要执行撤销报价操作？";
+"UPLOADING"                    = "正在上传中...";
+
+"ERROR_STOCK_NUM"              = "票据号不正确";
+"ERROR_STOCK_ACCEPTOR"         = "请填写正确的承兑人";
+"ERROR_STOCK_AMOUNT"           = "票面金额不正确";
+"ERROR_STOCK_DATE"             = "请选择票据日期";
+"ERROR_STOCK_ADDRESS"          = "请选择票据地址";
+"ERROR_STOCK_FRONT_IMAGE"      = "请选择正面截图";
+"ERROR_STOCK_BACK_IMAGE"       = "请选择背面截图";
+"ERROR_CANT_USE_CAMERA"        = "相机不可用";
+"ERROR_PLEASE_SELECT"          = "请选择";
+"ERROR_OPEN_CAMERA"            = "请打开照相机,才能拍照";
+"ERROR_OUT_RANGE"              = "指定的票源范围不正确";
+"ERROR_STOCK_CANT_DELETE"      = "票据已发布,不能删除！";
+
+"DELETE_OK"                    = "删除成功";
+"DELETE_FAIL"                  = "删除失败";
+"QUOTE_OK"                     = "报价成功";
+"QUOTE_FAIL"                   = "报价失败";
+"QUOTE_RESET_OK"               = "修改报价成功";
+"QUOTE_RESET_FAIL"             = "修改报价失败";
+"UNDO_OK"                       = "撤销成功";
+"UNDO_FAIL"                     = "撤销失败";
+
+"ADD_OK"                       = "添加成功";
+"ADD_FAIL"                     = "添加失败";
+"SUBMIT_OK"                    = "提交成功!";
+"SUBMIT_FAIL"                  = "提交失败，请重试！";
+"TRADE_OK"                     = "成交成功" ;
+"TRADE_FAIL"                   = "成交失败";
+"ERROR_VERIFY"                 = "客官稍等，验证码正在路上";
+
+"ERROR_NETWORK"                = "网络出错";
+"ERROR_GET_DATA_OK"            = "获取成功";
+"ERROR_GET_DATA_FAIL"          = "获取数据失败";
+"NO_MORE_DATA"                 = "没有更多数据!";
+"ERROR_DATA"                   = "数据出错";
+
+"ERROR_PHONE_NUM"              = "请输入正确的手机号码!";
+"ERROR_VERIFY_CODE"            = "验证码不能为空!";
+"ERROR_PWD_NONE"               = "密码不能为空!";
+"ERROR_PWD_NOT_SAME"           = "密码不一致!";
+"ERROR_PWD_RESET_FAIL"         = "密码更改不成功";
+
+":" = ":";
+
+

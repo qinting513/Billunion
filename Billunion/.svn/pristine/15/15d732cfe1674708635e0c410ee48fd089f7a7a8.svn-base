@@ -1,0 +1,13 @@
+//
+//  ScrollImageView.h
+//  Billunion
+//
+//  Created by QT on 17/1/17.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface ScrollImageView : UIScrollView
+
+@end

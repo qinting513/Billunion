@@ -1,0 +1,227 @@
+
+登陆
+1）URL：http://192.168.0.11:8080/bill-client/pc-client/user/login_processing
+2）参数："Username":"xxx","Password":"xxx","ValidationCode":"xxx"
+3）HTTP设置（今天可以不设置）：
+     - User-Agent：	mgm/pcclient/ios/android
+     - content-type:	application/x-www-form-urlencoded 
+
+
+
+交易接口地址： https://192.168.0.254/svn/1.billunion/2.design/2.perliminary/交易相关接口.txt
+
+
+// 买方市场里 纸票 电票 增加一列：交割时间
+
+// 票据行情 -》卖方市场-》k线图界面 -》点击 买入 ： 弹出的 交割时间View
+
+能点击的报价方有：我的买入-询价买入，我的买入-指定买入，我的卖出-询价卖出，我的卖出-指定卖出
+
+会出现贴现率弹窗的有：我的买入-报价买入，我的买入-被指定卖出，我的卖出-报价卖出，我的卖出-被指定买入，票据交易-询价卖出
+
+
+ 票据交易 -> 点击 交易中 弹出StockInfoViewController 交易完成 则没有下面2个按钮
+
+我的卖出（询价卖出 指定卖出）  --> 票据信息
+我的买入（询价买入、指定买入）  --> 买家信息
+
+能点击的报价方有：我的买入-询价买入，我的买入-指定买入，我的 卖出-询价卖出，我的卖出-指定卖出
+能点击的询价方有 all
+
+
+会出现贴现率弹窗的有：我的买入-报价买入，我的买入-被指定卖出，我的卖出-报价卖出，我的卖出-被指定买入，票据交易-询价卖出
+政策银行  国有大行 股份制行 省级城商 省级农商 外资银行 民营银 行 地方城商 地方农商 村镇农信
+
+中央企业 国有控股 地方国企 民营企业 外资企业
+
+有票据图的页面：票据行情-卖方市场，我的买入-报价买入，我的买 入-被指定卖出，我的卖出-询价卖出，我的卖出-指定卖出
+
+
+修改报价直接出现贴现率弹窗的：我的买入-询价买入，我的买入-指 定买入，我的买入-报价买入，我的卖出-询价卖出
+
+修改报价出现打包票据页面的：我的买入-被指定卖出，我的卖出-报 价卖出，我的卖出-指定卖出，我的卖出-被指定买入
+
+显示批量成交/挑票成交的地方有：询价买入-报价方，指定买入-报价方，被指定卖出-询价方，指定卖出-询价方
+
+报价方有交割时间的： 询价卖出 报价买入
+
+
+1天：1天
+7天：2～7天
+一月期：26～35天，含纸票、电票
+二月期：56～65天，含纸票、电票
+三月期：86～95天，含纸票、电票
+四月期：116～125天，含纸票、电票
+五月期：146～155天，含纸票、电票
+六月期：纸票为176～180天，电票为176～185天
+七月期：206～215天，含电票
+八月期：236～245天，含电票
+九月期：266～275天，含电票
+十月期：296～305天，含电票
+十一月期：326～335天，含电票
+十二月期：356～360天，含电票
+挂历票：日期在上述期限合集范围以外的票都属于挂历票，挂历票买卖双方单独议价，可以参考利率走势询价报价。比如还有8天～15天到期的票，
+
+public class StatusCode {
+/***********************系统-开始****************************/
+//system
+public static final int STATUS_SUCCESS = 0;
+public static final int STATUS_FAIL = 1;								// 处理失败。但不推荐使用该常量，而应该使用其他常量以展示更具体的信息
+public static final int STATUS_NO_PERMISSION = 5;						// 无访问该资源的权限
+public static final int STATUS_DB_EXCEPTION = 6;						// 数据库访问异常
+public static final int STATUS_INVALID_CLIENT =8;						// 使用了不合法的客户端尝试登录，如：浏览器访问非MGM的URL
+public static final int STATUS_INVALID_SESSION =9;						// 无Session或Session超时
+public static final int STATUS_INVALID_POST =10;						// 提交了非POST的请求到POST的方法体
+public static final int STATUS_INVALID_PARAM_Illegal_CHARSET = 11;		// 提交了非UTF-8的字符参数
+public static final int STATUS_INVALID_PARAM_WITH_MALICIOUS_CODE = 12;	// 代码中包含疑似恶意代码的关键词（该代码基本已确定不会被使用，暂时保留）
+public static final int STATUS_COMMON_VALIDATION_SUCCESS = 13;			// 参数公共校验成功，公共校验包括：参数的非空、字符集的判断。
+public static final int STATUS_JSON_PARSE_EXCEPTION=15;					// JSON解析错误
+
+//register
+public static final int STATUS_INVALID_USER_CATEGORY = 1000; 		// 用户类型错误
+public static final int STATUS_INVALID_COMPANY_TYPE = 1001; 		// 企业类型错误
+public static final int STATUS_INVALID_COMPANY_NAME = 1002;			// 公司名为空或格式不合法
+public static final int STATUS_INVALID_CONTACT = 1003;				// 企业联系人姓名为空或格式不合法
+public static final int STATUS_INVALID_PASSWORD = 1004;				// 密码为空或格式不合法
+public static final int STATUS_INVALID_MOBILE_NUMBER = 1005;		// 手机号为空或格式不合法
+public static final int STATUS_INVALID_EMAIL = 1006;				// Email为空或格式不合法
+public static final int STATUS_INVALID_VALIDATION_CODE = 1007;		// 验证码为空或格式不合法
+
+//完善企业信息
+public static final int STATUS_INVALID_ARTIFICIALPERSON = 1008;
+public static final int STATUS_INVALID_DEPOSITBANK = 1009;			// 无效的开户行
+public static final int STATUS_INVALID_BANKACCOUNT = 1010;			// 无效的银行账号
+public static final int STATUS_INVALID_BUSINESSlICENCE = 1011;		// 无效的营业执照
+public static final int STATUS_INVALID_ACCOUNTNAME = 1012;			// 无效的银行账户名称
+public static final int STATUS_INVALID_COMPANYID = 1013;			// 无效的公司ID
+public static final int STATUS_INVALID_KEYWORD = 1014;				// 无效的关键字
+
+//一般业务
+public static final int STATUS_BUSINESS_COMPANY_NOT_FOUND = 2000;			// 无法找到该公司信息
+public static final int STATUS_BUSINESS_LOGIN_FAIL = 2001;					// 登录失败（但没显示具体原因，故不推荐使用该标志位，并需要转移到其他标志位；稍后删除）
+public static final int STATUS_BUSINESS_USER_LOCKED = 2002;					// 用户已被锁定
+public static final int STATUS_BUSINESS_USER_DELETED = 2003;				// 用户已被删除
+public static final int STATUS_BUSINESS_LOGIN_ALREADY = 2004;				// 用户已登录的同时，尝试再登录其他客户端
+public static final int STATUS_BUSINESS_VALIDATION_CODE_MISMATCH = 2005;	// 验证码不匹配
+public static final int STATUS_BUSINESS_PWD_MISMATCH = 2006;				// 输入密码和数据库中的不匹配
+public static final int STATUS_BUSINESS_MOBILE_REGISTERED = 2007;			// 该电话已经注册过了
+public static final int STATUS_BUSINESS_PWD_EXPIRED = 2008;					// 密码已失效；失效时限是90天
+public static final int STATUS_BUSINESS_PWD_NEW_OLD_MISMATCH = 2009;		// 输入的新旧密码不匹配
+public static final int STATUS_BUSINESS_SYSOPERATOR_NO_PRIVILEGE = 2010;	// 不是经办人，没有添加或者修改及删除操作员和用户组的权限
+public static final int STATUS_BUSINESS_GROUPNAME_REGISTERED = 2011;		// 该用户组名已经存在
+public static final int STATUS_BUSINESS_SYSAUDITOR_NO_PRIVILEGE = 2012;	    // 不是审核人，没有审核操作员和用户组的权限
+// 登录
+public static final int STATUS_INVALID_USER = 3000;							// 该用户在系统中不存在
+public static final int STATUS_REGISTER_INVALID_COMPANY_ID = 3001;			// 该用户输入的公司ID不合法
+public static final int STATUS_INVALID_PERMISSION = 3002;					// 该用户的权限不存在
+
+//	快捷键的设置
+
+/* ---------------------------- 登录后，记录状态 - 开始 ---------------------------- */
+public static final String LOGIN_STATUS_LOGGON = "0";						// 用户已登录
+public static final String LOGIN_STATUS_NOT_LOGGON = "1";					// 用户未登录
+public static final String USER_STATE_NORMAL = "1";							// 用户是正常状态
+public static final String USER_STATE_LOCKED = "1";							// 用户是被锁定状态
+/* ---------------------------- 登录后，记录状态 - 结束 ---------------------------- */
+
+public static String ErrorResponse(int code){
+return "{\"Status\":" + code + "}";
+}
+/***********************系统-结束****************************/
+
+/**
+*	登入Session校验错误码
+*/
+public static final int STATUS_SESSION_NULL=10010;							// Session为空
+public static final int STATUS_SESSION_USER_ID_NULL=10020;					// Session用户编号为空
+public static final int STATUS_SESSION_COMPANY_ID_NULL=10030;				// Session企业编号为空
+
+/**
+*	操作码校验错误码
+*/
+public static final int STATUS_OPER_TYPE_EMPTY=20010;						// 输入操作码为空
+public static final int STATUS_OPER_TYPE_INVALID=20011;						// 输入操作码无效
+
+/**
+*	输入参数校验错误码
+*/
+public static final int STATUS_PARAM_EMPTY=30010;							// 输入参数为空
+public static final int STATUS_PARAM_INVALID=30011;							// 输入参数不合法。但不推荐使用该常量，而应该使用其他常量以展示更具体的信息
+public static final int STATUS_PARAM_PAGE_NULL=30020;						// 输入页码为空
+public static final int STATUS_PARAM_PAGE_INVALID=30021;					// 输入页码无效 页码范围无效
+public static final int STATUS_PARAM_ITEM_NUM_NULL=30030;					// 输入页大小为空
+public static final int STATUS_PARAM_ITEM_NUM_INVALID=30031;				// 输入页大小无效 页大小范围无效
+public static final int STATUS_PARAM_BILL_NUM_EMPTY=30040;					// 输入票号为空
+public static final int STATUS_PARAM_BILL_TYPE_NULL=30050;					// 输入票据类型为空
+public static final int STATUS_PARAM_ACCEPTOR_TYPE_NULL=30060;				// 输入承兑人类型为空
+public static final int STATUS_PARAM_AMOUNT_NULL=30070;						// 输入金额为空
+public static final int STATUS_PARAM_RELEASE_DATE_EMPTY=30080;				// 输入发布日期为空
+public static final int STATUS_PARAM_RELEASE_DATE_ILLEGAL=30081;			// 输入发布日期非法
+public static final int STATUS_PARAM_EXPIRE_DATE_EMPTY=30090;				// 输入到期日期为空
+public static final int STATUS_PARAM_EXPIRE_DATE_ILLEGAL=30091;				// 输入到期日期非法
+public static final int STATUS_PARAM_EXPIRE_DATE_INEFFECTIVE=30092;			// 输入到期日期无效
+public static final int STATUS_PARAM_BILL_ID_NULL=30100;					// 输入票据编号为空
+public static final int STATUS_PARAM_COMPANY_ID_NULL=30110;					// 输入公司编号为空
+public static final int STATUS_PARAM_AUDIT_STATE_NULL=30120;				// 输入审核状态为空
+public static final int STATUS_PARAM_ID_NULL=30130;							// 输入编号为空
+public static final int STATUS_PARAM_INQUIRY_ID_EMPTY=30140;				// 输入询价编号为空
+/**
+*	业务参数校验错误码
+*/
+public static final int STATUS_BUSINESS_BILLINFO_NULL=40010;				// 输出票据对象为空
+public static final int STATUS_BUSINESS_BILL_STATUS_IN_TRADE=40020;			// 输出票据状态为在交易
+public static final int STATUS_BUSINESS_EXAMINE_ID_NULL=40030;				// 输出审核编号为空
+public static final int STATUS_BUSINESS_EXAMINE_STATUS_NOT_OPEN=40040;		// 输出审核状态未打开
+
+/**
+*	异常错误码
+*/
+public static final int STATUS_ENTITY_BILLINFO_ADD=50010;					// 票据实体新增异常
+public static final int STATUS_ENTITY_BILLINFO_UPDATE=50011;				// 票据实体更新异常
+public static final int STATUS_ENTITY_BILLINFO_QUERY=50012;					// 票据实体查询异常
+public static final int STATUS_ENTITY_AUDIT_ADD=50020;						// 审核实体新增异常
+public static final int STATUS_ENTITY_AUDIT_UPDATE=50021;					// 审核实体更新异常
+public static final int STATUS_ENTITY_AUDIT_QUERY=50022;					// 审核实体查询异常
+public static final int STATUS_ENTITY_SELLERMARKET_QUERY=50030;				// 卖方市场实体查询异常
+public static final int STATUS_ENTITY_BILLOFFER_QUERY=50040;				// 票据询价实体查询异常
+public static final int STATUS_ENTITY_BILLFINANCERECORD_STATS=50050;		// 票据融资实体统计异常
+public static final int STATUS_ENTITY_COMPANYINFO_QUERY=50060;				// 企业实体查询异常
+public static final int STATUS_ENTITY_BILLINQUIRYITEM_QUERY=50070;			// 询价项实体查询异常
+
+/**
+*	文件上传异常错误码
+*/
+public static final int STATUS_EXCEPTION_UPLOAD_FILE_EMPTY = 60001;			// 上传文件为空
+public static final int STATUS_EXCEPTION_WRITE_FILE_ERROR = 60002;			// 写文件异常
+
+
+
+/**
+*	其他错误码(数据处理...)
+*/
+
+//1120
+
+一.银行
+1.超级管理员 名称：JM  账号：13000000001  账号2：B10117  密码：87654321  公司Id:1125
+2.系统操作员 名称：JM  账号：13000000002  密码：123456aa
+3.普通操作员 名称：JM  账号：13000000003  密码：123456aa
+
+二.非银行金融机构
+1.超级管理员 名称：QT  账号：13000000011  账号2:F10007   密码：123456aa 公司Id: 1126
+2.系统操作员 名称：QT  账号：13000000012  密码：123456aa
+3.普通操作员 名称：QT  账号：13000000013  密码：123456aa
+
+三.企业
+1.超级管理员 名称：JM  账号：13000000021  账号2:E1014      密码：123456aa 公司Id:1127
+2.系统操作员 名称：JM  账号：13000000022  密码：123456aa
+3.普通操作员 名称：JM  账号：13000000023  密码：123456aa   //CompanyId 1127
+
+/** CompanyType   1 银行 2 非银行金融机构 3 工商企业 */
+//1、企业不能购买银行卖出的票据（无论是询价方还是报价方），银行不能卖票给企业
+//2、询价卖出时，只有银行可以打包卖出票据（无论是挑票或者整批成交方式），其他类型账户只能卖出单张票据
+
+1中国农业发展银行      2中国工商银行股份有限公司北京通州支行新华分理处     3北京银行股份有限公司芍药居支行    4成都银行      5长春农村商业银行股份有限公司大连金马路支行     6汇丰银行（中国）有限公司北京分行   7中德住房储蓄银行有限责任公司天津和平支行    8上海华瑞银行   9廊坊银行股份有限公司天津河北支行   10新疆汇和银行股份有限公司乌鲁木齐昆仑路支行   11惠水县农村信用合作联社时代分社
+
+13631228675   a12345678
+

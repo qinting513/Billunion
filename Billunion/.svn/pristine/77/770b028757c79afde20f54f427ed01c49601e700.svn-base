@@ -1,0 +1,23 @@
+//
+//  StockScrollView.h
+//  Billunion
+//
+//  Created by Waki on 2017/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@protocol StockScrollViewDelegate;
+
+@interface StockScrollView : UIScrollView
+
+@property (nonatomic ,assign) id<StockScrollViewDelegate>scdelegate;
+
+@end
+
+@protocol StockScrollViewDelegate <NSObject>
+
+- (void)endClick;
+
+@end

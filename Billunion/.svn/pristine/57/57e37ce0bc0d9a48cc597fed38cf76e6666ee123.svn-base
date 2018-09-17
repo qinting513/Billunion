@@ -1,0 +1,45 @@
+//
+//  SellDetailViewModel.m
+//  Billunion
+//
+//  Created by QT on 17/2/16.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "SellerDetailViewModel.h"
+#import "FGNetworking.h"
+#import "MarketModel.h"
+
+@implementation SellerDetailViewModel
+
+/**
+ 查询卖方市场询价详情
+ 
+ @param tradeSide  交易方(0 是卖方市场  1 是买方市场)
+ @param ID        询价ID
+ @param block     响应block
+ */
+
++(void)requestSellerInquiryDetailWithTradeSide:(int)tradeSide inquiryID:(NSInteger)ID  response:( void(^)(NSArray *dataArr,NSString *errorStr))block
+{
+    NSDictionary * params = @{
+                              @"OperType":@302,
+                              @"Param": @{
+                                         @"TradeSide": @(tradeSide),
+                                         @"Id": @(ID)
+                                      }
+                              };
+    [FGNetworking requsetWithPath:SELLER_INQUIRY_DETAIL params:params method:Post handleBlcok:^(id response, NSError *error) {
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0) {
+                NSArray *modelArr = [MarketModel mj_objectArrayWithKeyValuesArray:response[@"Data"]];
+                !block ?: block(modelArr,nil);
+            }
+        }else{
+            NSLog(@"网络请求出错：%@",error);
+        }
+    }];
+}
+
+@end

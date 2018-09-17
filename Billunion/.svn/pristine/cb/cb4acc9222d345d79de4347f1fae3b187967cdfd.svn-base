@@ -1,0 +1,78 @@
+
+//
+//  StockTableView.m
+//  Billunion
+//
+//  Created by Waki on 2016/12/30.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import "StockTableView.h"
+#import "StockTableViewCell.h"
+#import "StockScrollView.h"
+
+
+#define CellHeight 36
+#define LeftTableViewTag 980
+@interface StockTableView ()<UITableViewDelegate,UITableViewDataSource,StockTableViewCellDelegate>{
+  
+}
+
+@end
+@implementation StockTableView
+
+- (instancetype)initWithFrame:(CGRect)frame style:(UITableViewStyle)style
+{
+    self = [super initWithFrame:frame style:style];
+    if (self) {
+        self.dataSource = self;
+        self.delegate =self;
+        self.backgroundColor = [UIColor blackColor];
+        self.separatorStyle = UITableViewCellSeparatorStyleNone;
+        self.showsVerticalScrollIndicator = NO;
+        self.showsHorizontalScrollIndicator = NO;
+    }
+    return self;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return _dataArray.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    StockTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"StockTableViewCell"];
+    if (!cell) {
+        cell = [[StockTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"StockTableViewCell" createItems:[_dataArray[indexPath.row] count] cellWidth:self.width cellHeigth:CellHeight];
+    }
+    if (_dataArray.count) {
+         [(StockTableViewCell *)cell setCellInfo:_dataArray[indexPath.row] indexPath:indexPath];
+    }
+    cell.delegate = self;
+    cell.contentView.backgroundColor = [UIColor colorWithRGBHex:0x141414];
+    cell.backgroundColor = [UIColor colorWithRGBHex:0x141414];
+   // [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return CellHeight;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (self.stockTableViewBlock) {
+        self.stockTableViewBlock(indexPath,self.tag);
+    }
+    [tableView deselectRowAtIndexPath:indexPath animated:NO];
+}
+
+
+
+- (void)cellScrollViewDidScroll:(CGFloat)moveX indexPath:(NSIndexPath *)indexPath{
+    // 发送通知
+    [[NSNotificationCenter defaultCenter] postNotificationName:tapCellScrollNotification object:self userInfo:@{@"cellOffX":@(moveX)}];
+}
+
+
+
+
+@end

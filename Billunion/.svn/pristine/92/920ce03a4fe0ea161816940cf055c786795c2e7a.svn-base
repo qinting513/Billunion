@@ -1,0 +1,397 @@
+
+//
+//  ResetOfferViewController.m
+//  Billunion
+//
+//  Created by Waki on 2017/3/2.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "ResetOfferViewController.h"
+#import "StockView.h"
+#import "InfoMationView.h"
+#import "KLineViewModel.h"
+#import "TradeViewModel.h"
+#import "AddressViewController.h"
+
+#define BottomViewHeight 50.0
+
+@interface ResetOfferViewController ()<StockViewProtocol,UITextFieldDelegate>{
+    InfoMationView *_infoMationView;
+    UILabel *_moneyLabel;
+    UILabel *_rateLabel;
+    UIButton * _transactionBtn;
+    CGFloat _topViewH;
+    
+    UIButton *_deliveryBtn;  //交割时间按钮
+    UIButton *_anonymousBtn;  //是否匿名按钮
+    UITextField *_discountRateField;
+}
+
+@property (nonatomic, strong) StockView *stockView;
+
+
+@end
+
+@implementation ResetOfferViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    self.title = NSLocalizedString(@"ModifyOffer", nil);
+    NSArray * subTitles = [Tools getSubTitlesWithStockAllType:StockAllType_BillDetail];
+    if (self.klineType == KLine_sellerMarket) {
+        _topViewH = STRealY(367);
+        self.title = NSLocalizedString(@"QuoteBuy", nil);
+    }else if (self.klineType == KLine_buyerOffer){
+        _topViewH = STRealY(160);
+    }else{
+        _topViewH = 0;
+    }
+    
+    if (self.billArray.count > 0) {
+        [self addStockViewWithSubTitles:subTitles];
+        [self layoutBottonView];
+        _infoMationView = [[InfoMationView alloc] initWithFrame:self.view.bounds];
+        [self.view addSubview:_infoMationView];
+    }
+    
+ 
+}
+
+- (void)addStockViewWithSubTitles:(NSArray *)subTitles{
+    self.stockView = [[StockView alloc]initWithFrame:CGRectMake(0, 64, WIDTH, HEIGHT-64-BottomViewHeight-_topViewH) withTransactionType:TransactionTypeSingle titles:subTitles];
+    self.stockView.delegate = self;
+    self.stockView.backgroundColor = [UIColor blueColor];
+    [self.view addSubview:self.stockView];
+
+    
+    self.stockView.dataArray = [NSMutableArray arrayWithArray:self.billArray];
+    [self.stockView tableViewReloadData];
+}
+
+- (void)stockDidSelectWithIndexPath:(NSIndexPath *)indexPath stockView:(id)view{
+    
+    if (self.klineType == KLine_buyerOffer) {
+        return;
+    }
+    NSNumber *discountRate = [TradeViewModel getDiscountRateWithStockModel:self.billArray[indexPath.row]];
+    __weak typeof(self) weakSelf = self;
+    if (discountRate) {
+        _infoMationView.inputViewStr = [NSString stringWithFormat:@"%.2f",[discountRate floatValue]];
+    }
+    [_infoMationView showWithType:InfoMationViewType_InPut_DiscountRate];
+    _infoMationView.inputTextViewBlock = ^(BOOL isSureBtn,NSString *message){
+        if (isSureBtn && message) {
+            [weakSelf didResetDiscountRate:message row:indexPath.row];
+        }
+    };
+}
+
+- (void)didResetDiscountRate:(NSString *)discountRate row:(NSInteger)row{
+    NSNumber *rate = [NSNumber numberWithFloat:discountRate.floatValue];
+    [TradeViewModel resetDiscountRate:rate stockModel:self.billArray[row]];
+    [self.stockView tableViewReloadData];
+    
+     [self setAmcount];
+}
+
+
+//下面部分的View
+- (void)layoutBottonView{
+    
+    UIView *bottonView = [[UIView alloc] initWithFrame:CGRectMake(0, HEIGHT-BottomViewHeight, WIDTH, BottomViewHeight)];
+    bottonView.backgroundColor = [UIColor colorWithRGBHex:0x252429];
+    [self.view addSubview:bottonView];
+    
+    _moneyLabel = [UILabel labelWithText:nil
+                                fontSize:13.0f
+                               textColor:[UIColor colorWithRGBHex:0x93a6be]
+                               alignment:NSTextAlignmentLeft];
+    [bottonView addSubview:_moneyLabel];
+    
+    _rateLabel = [UILabel labelWithText:nil
+                               fontSize:13.0f
+                              textColor:[UIColor colorWithRGBHex:0x93a6be]
+                              alignment:NSTextAlignmentLeft];
+    [bottonView addSubview:_rateLabel];
+    
+    _transactionBtn = [UIButton buttonWithTitle:NSLocalizedString(@"Finish", nil) titleFont:13.0f titleColor:[UIColor colorWithRGBHex:0xfefefe] target:self action:@selector(btnClick)];
+    _transactionBtn.backgroundColor = [UIColor colorWithRGBHex:0x2262ac];
+    _transactionBtn .layer.masksToBounds = YES;
+    _transactionBtn.layer.cornerRadius = 3;
+    [bottonView addSubview:_transactionBtn];
+    
+    
+    CGFloat top = (bottonView.height - 13.0)*0.5;
+    _moneyLabel.sd_layout.topSpaceToView(bottonView,top).leftSpaceToView(bottonView,15).bottomSpaceToView(bottonView,top).widthIs(100);
+    
+    _rateLabel.sd_layout.topSpaceToView(bottonView,top).leftSpaceToView(_moneyLabel,20).bottomSpaceToView(bottonView,top).widthIs(85);
+    
+    _transactionBtn .sd_layout.centerYEqualToView(_rateLabel).leftSpaceToView(_rateLabel,20).rightSpaceToView(bottonView,20).heightIs(36);
+    
+    
+    if (self.klineType == KLine_sellerMarket || self.klineType == KLine_buyerOffer) {
+        [self layoutTopView];
+    }
+    
+    [self setAmcount];
+}
+
+
+//上部分view
+- (void)layoutTopView{
+   UIView *topView = [[UIView alloc] initWithFrame:CGRectMake(0,HEIGHT-BottomViewHeight-_topViewH , WIDTH, _topViewH)];
+    topView.backgroundColor = [UIColor colorWithRGBHex:0x252429];
+    [self.view addSubview:topView];
+    
+    UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(0, _topViewH-0.5, WIDTH, 0.5)];
+    lineView.backgroundColor = [UIColor colorWithRGBHex:0x33333];
+    [topView addSubview:lineView];
+    
+    //UI类型区分
+    if (self.klineType == KLine_sellerMarket) {
+  
+        UILabel *timeLabel = [UILabel labelWithText:NSLocalizedString(@"DeliveryTime", nil) fontSize:15 textColor:[UIColor whiteColor] alignment:NSTextAlignmentLeft];
+        [topView addSubview:timeLabel];
+        timeLabel.sd_layout.topSpaceToView(topView,STRealX(30)).leftSpaceToView(topView,STRealX(30)).rightSpaceToView(topView,0).heightIs(15);
+        
+        NSArray *titles = @[@"T+0",@"T+1",@"T+2",@"T+3"];
+         CGFloat btnW = (WIDTH - STRealX(30)*2- STRealX(10)*3)/4;
+        CGFloat btnY = STRealY(71);
+        CGFloat btnH = STRealY(48);
+        for(int i = 0;i<titles.count;i++) {
+            UIButton *btn = [self getButton:titles[i] frame:CGRectMake(STRealX(30) + (btnW+STRealX(10))*i,btnY, btnW, btnH)];
+            btn.tag = 200+i;
+            [topView addSubview:btn];
+            if (i == 0) {
+                btn.selected = YES;
+                btn.backgroundColor = [UIColor colorWithRGBHex:0x93a6be];
+                _deliveryBtn = btn;
+            }
+        }
+        
+
+        UILabel *anonymousLabel = [UILabel labelWithText:NSLocalizedString(@"IsAnonymous", nil) fontSize:15 textColor:[UIColor whiteColor] alignment:NSTextAlignmentLeft];
+        [topView addSubview:anonymousLabel];
+        anonymousLabel.sd_layout.topSpaceToView(topView,STRealY(159)).leftSpaceToView(topView,STRealY(30)).heightIs(btnH).widthIs(btnW);
+        
+        NSArray *yesOrNo = @[NSLocalizedString(@"NO", nil),NSLocalizedString(@"YES", nil)];
+        CGFloat yesX = btnW + STRealX(10)+STRealX(30);
+        for (int i= 0; i<yesOrNo.count; i++) {
+            UIButton *btn = [self getButton:yesOrNo[i] frame:CGRectMake(yesX + (btnW+STRealX(10))*i,STRealY(159), btnW, btnH)];
+            [topView addSubview:btn];
+            if (i == 0) {
+                btn.selected = YES;
+                btn.backgroundColor = [UIColor colorWithRGBHex:0x93a6be];
+                _anonymousBtn = btn; // 是否匿名
+            }
+        }
+
+    }
+    
+    [self layoutDiscountRateTextField:topView];
+    
+}
+
+- (UIButton *)getButton:(NSString *)string frame:(CGRect)frame{
+    UIButton *button = [UIButton buttonWithTitle:string titleFont:13 titleColor:[UIColor colorWithRGBHex:0xffffff] target:self action:@selector(deliveryBtnClick:)];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateSelected];
+    button.frame = frame;
+    button.layer.borderWidth = 1;
+    button.layer.cornerRadius = 5;
+    button.layer.borderColor  = [UIColor colorWithRGBHex:0x93a6be].CGColor;
+    return button;
+}
+
+/** 交割时间按钮 */
+-(void)deliveryBtnClick:(UIButton *)btn
+{
+    btn.selected = !btn.selected;
+    btn.backgroundColor = [UIColor colorWithRGBHex:0x93a6be];
+    
+    if ([btn.currentTitle isEqualToString:NSLocalizedString(@"NO", nil)] ||
+        [btn.currentTitle isEqualToString:NSLocalizedString(@"YES", nil)]) {
+        _anonymousBtn.selected = !btn.selected;
+        _anonymousBtn.backgroundColor = [UIColor clearColor];
+        _anonymousBtn = btn;
+    }else{
+        _deliveryBtn.selected = !btn.selected;
+        _deliveryBtn.backgroundColor = [UIColor clearColor];
+        _deliveryBtn = btn;
+    }
+    
+}
+//获取交割时间
+- (NSNumber  *)getDelivery{
+    return @(_deliveryBtn.tag-200);
+}
+
+//获取是否匿名
+-(NSInteger)getAnonymous{
+    if ([_anonymousBtn.currentTitle isEqualToString:NSLocalizedString(@"NO", nil)]) {
+        return 0;
+    }else{
+        return 1;
+    }
+}
+
+//获取贴现率
+- (NSNumber *)getDiscountRate{
+    if ([_discountRateField.text isPureFloat] &&
+        _discountRateField.text.floatValue > 0 &&
+        _discountRateField.text.floatValue <= 100 ) {
+        return [NSNumber numberWithFloat:_discountRateField.text.floatValue];
+    }else{
+        return nil;
+    }
+}
+
+
+
+//贴现率输入框
+- (void)layoutDiscountRateTextField:(UIView *)superView{
+    CGFloat labelW = (WIDTH - STRealX(30)*2- STRealX(10)*3)/4;
+    UILabel *rateLabel = [UILabel labelWithText:NSLocalizedString(@"DiscountRate", nil) fontSize:15 textColor:[UIColor whiteColor] alignment:NSTextAlignmentLeft];
+    [superView addSubview:rateLabel];
+
+    
+    UITextField *tf = [[UITextField alloc] init];
+    [superView addSubview:tf];
+    tf.placeholder = @"0.00";
+    tf.textColor = [UIColor whiteColor];
+    tf.font = [UIFont systemFontOfSize:21];
+    tf.delegate = self;
+    tf.keyboardType = UIKeyboardTypeDecimalPad;
+    tf.layer.borderWidth = 1;
+    tf.layer.borderColor  = [UIColor colorWithRGBHex:0x93a6be].CGColor;
+    
+    [tf setValue:[UIColor colorWithRGBHex:0x666666] forKeyPath:@"_placeholderLabel.textColor"];
+    
+    //左边和右边的视图
+    tf.leftViewMode = UITextFieldViewModeAlways;
+    tf.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 30)];
+    _discountRateField = tf;
+    
+    rateLabel.sd_layout.bottomEqualToView(superView).leftSpaceToView(superView,STRealX(30)).heightIs(STRealY(160)).widthIs(labelW);
+    
+    tf.sd_layout.leftSpaceToView(rateLabel,STRealX(10)).rightSpaceToView(superView,STRealX(30)).centerYEqualToView(rateLabel).heightIs(STRealY(80));
+}
+
+#pragma makr - UITextFieldDelegate
+- (void)textFieldDidEndEditing:(UITextField *)textField{
+    if ([_discountRateField.text isPureFloat] &&
+        _discountRateField.text.floatValue > 0 &&
+        _discountRateField.text.floatValue <= 100 ) {
+        
+        for (int i = 0 ; i < self.billArray.count; i++) {
+            [self didResetDiscountRate:_discountRateField.text row:i];
+        }
+    }else{
+        [self.view showWarning:NSLocalizedString(@"DISCOUNTRATE_ERROR", nil) ];
+    }
+    
+}
+
+
+- (void)setAmcount{
+    NSString *allAmount = [NSString stringWithFormat:@"%.2f",[KLineViewModel getAllAmountWithBillArray:self.billArray]];
+    NSString *averageDiscountRate = [NSString stringWithFormat:@"%.2f",[KLineViewModel getAverageDiscountRateWithBillArray:self.billArray]];
+    _moneyLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"Amount", nil),allAmount];
+    _rateLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"DiscountRate", nil),averageDiscountRate];
+}
+
+// 完成 按钮
+- (void)btnClick{
+    __weak typeof(self) weakSelf = self;
+    if (self.klineType == KLine_beSellerSpecify || //被指定卖出
+          self.klineType == KLine_beBuyerSpecify || //被指定买入
+          self.klineType == KLine_sellerOffer){   //报价卖出
+        
+        if (self.OfferId) {   //修改报价
+            [KLineViewModel resetSellerOfferWithBillRecords:[KLineViewModel getBillRecordsWithBillList:self.billArray] offerId:self.OfferId response:^(BOOL isSecceed, NSString *message) {
+                [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:weakSelf clickBlock:^(BOOL ok, BOOL cancel) {
+                    if (isSecceed) {
+                        [weakSelf.navigationController popViewControllerAnimated:YES];
+                    }
+                }];
+            }];
+        }else if (self.InquiryId && self.klineType == KLine_beSellerSpecify){   //修改贴现率并成交  （还价+成交）
+            NSNumber *delivery = [self getDelivery];
+   
+            NSArray *billRecords = [KLineViewModel getBillRecordsWithBillList:self.billArray];
+            [KLineViewModel tradeBuyerOfferWithBillRecords:billRecords isAnonymous:1 TradeType:0 inquiryId:self.InquiryId delivery:delivery response:^(NSString *message,BOOL isFailLocation) {
+                if (isFailLocation) {
+                    AddressViewController *vc = [[AddressViewController alloc]init];
+                    vc.normalBlock = ^(NSString *address,NSString *selectedCity){
+                        if (address != nil) {
+                            [KLineViewModel tradeBuyerOfferWithBillRecords:billRecords isAnonymous:1 TradeType:0 inquiryId:self.InquiryId delivery:delivery address:address response:^(NSString *message, BOOL isFailLocation) {
+                                [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil)  cancelTtile:nil target:weakSelf clickBlock:nil];
+                            }];
+                        }
+                    };
+                    [weakSelf.navigationController pushViewController:vc animated:YES];
+                }
+                [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil)  message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:self clickBlock:nil];
+            }];
+
+        }
+    }else if (self.klineType == KLine_sellerSpecify){  //指定卖出
+        [KLineViewModel resetSellerInquiryWithInquiryId:self.InquiryId
+                                            billRecords:[KLineViewModel getBillRecordsWithBillList:self.billArray]
+                                               response:^(BOOL isSecceed, NSString *message) {
+                                                   [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:weakSelf clickBlock:nil];
+                                               }];
+    }else if (self.klineType == KLine_sellerInquiry){ //询价卖出
+    
+        //询价卖出修改报价
+        NSArray *array = [KLineViewModel getBillRecordsWithBillList:self.billArray];
+        [KLineViewModel resetSellerInquiryWithInquiryId:self.InquiryId billRecords:array response:^(BOOL isSecceed, NSString *message) {
+            [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:self clickBlock:nil];
+        }];
+    }else if (self.klineType == KLine_buyerOffer){
+//        //报价买入修改报价
+        NSArray *array = [KLineViewModel getBillRecordsWithBillList:self.billArray];
+        [KLineViewModel resetBuyerOfferWithBillRecords:array
+                                               offerId:self.OfferId
+                                               address:nil
+                                              response:^(BOOL isSecceed, NSString *message) {
+                                                  [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:self clickBlock:nil];
+                                              }];
+        
+    }else if (self.klineType == KLine_sellerMarket || self.klineType == KLine_nearStock){ //卖方市场/附近票源 点击买入
+      
+        if (![self getDiscountRate]) {
+            [self.view showWarning:NSLocalizedString(@"DISCOUNTRATE_ERROR", nil)];
+            return;
+        }
+        NSInteger isAnonymous = [self getAnonymous];
+        NSNumber * delivery = [self getDelivery];
+
+
+           NSArray *array = [KLineViewModel getBillRecordsWithBillList:self.billArray];
+            __weak typeof(self) weakSelf = self;
+        
+        [KLineViewModel tradeBuyerOfferWithBillRecords:array isAnonymous:isAnonymous TradeType:0 inquiryId:self.InquiryId delivery:delivery response:^(NSString *message,BOOL isFailLocation) {
+                if (isFailLocation) {
+                    AddressViewController *vc = [[AddressViewController alloc]init];
+                    vc.normalBlock = ^(NSString *address,NSString *selectedCity){
+                        if (address != nil) {
+                            [KLineViewModel tradeBuyerOfferWithBillRecords:array isAnonymous:isAnonymous TradeType:0 inquiryId:weakSelf.InquiryId delivery:delivery address:address response:^(NSString *message, BOOL isFailLocation) {
+                                [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:weakSelf clickBlock:nil];
+                            }];
+                        }
+                    };
+                    [weakSelf.navigationController pushViewController:vc animated:YES];
+                }
+                [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:message okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:self clickBlock:nil];
+            }];
+        }
+
+
+}
+
+
+
+
+@end

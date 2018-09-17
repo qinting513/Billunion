@@ -1,0 +1,289 @@
+//
+//  KLineTableView.m
+//  Billunion
+//
+//  Created by QT on 17/2/20.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "KLineTableView.h"
+#import "HeadView.h"
+#import "ShareViewModel.h"
+#import "KLineCell.h"
+#import "ButtonsCell.h"
+#import "AskBuyCell.h"
+#import "QuoteCell.h"
+
+#import "OfferModel.h"
+
+#define  KLineHeight 270
+
+@interface KLineTableView()<UITableViewDelegate,UITableViewDataSource,
+        ButtonsCellDelegate,KLineCellDelegate>
+
+@property (nonatomic,strong)HeadView *headView;
+@end
+
+@implementation KLineTableView
+
+-(instancetype)initWithFrame:(CGRect)frame style:(UITableViewStyle)style kLineType:(KLINE_TYPE)kLineType images:(NSArray *)images
+{
+    if (self = [super initWithFrame:frame style:style]) {
+        self.delegate = self;
+        self.dataSource = self;
+        self.backgroundColor = [UIColor blackColor];
+        self.separatorStyle = UITableViewCellSeparatorStyleNone;
+        self.kLineType = kLineType;
+        [self setupHeadViewWithArray:images];
+    }
+    return self;
+}
+
+
+-(void)setupHeadViewWithArray:(NSArray *)headImages
+{
+    if (_kLineType == KLine_buyerOffer      ||
+        _kLineType == KLine_beSellerSpecify ||
+        _kLineType == KLine_sellerInquiry   ||
+        _kLineType == KLine_sellerSpecify   ||
+        _kLineType == KLine_sellerMarket    ||
+        _kLineType == KLine_nearStock) {
+       
+        if (headImages == nil) {
+            self.headView.imgs = @[@"none_logo",@"none_logo"];
+        }else{
+            self.headView.imgs = headImages;
+        }
+        self.tableHeaderView = self.headView;
+    }
+}
+
+-(HeadView *)headView
+{
+    if (!_headView) {
+        _headView = [[HeadView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, WIDTH/2/3*5) imgs:nil];
+        _headView.backgroundColor = [UIColor blackColor];
+        __weak typeof(self) weakSelf = self;
+        _headView.headViewBrowsePhotoBlock = ^(NSArray*imgs, NSInteger index){
+            if (weakSelf.kLineTableViewDelegate && [weakSelf.kLineTableViewDelegate respondsToSelector:@selector(KLineTableView:browsePhotos:beginIndex:)]) {
+                [weakSelf.kLineTableViewDelegate KLineTableView:weakSelf browsePhotos:imgs beginIndex:index];
+            }
+        };
+    }
+    return _headView;
+}
+
+
+
+#pragma mark - tableView DataSource
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+    return 4;
+}
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+
+    return (section < 3 ) ? 1 : self.quoteArray.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    UITableViewCell *cell;
+    switch (indexPath.section) {
+        case 0:
+        {
+            /** k线图 */
+            cell = (KLineCell*)[self getCellWith:tableView cellID:@"KLineCell"];
+            ((KLineCell *)cell).delegate = self;
+            ((KLineCell*)cell).dataArray = _klineDataArray;
+            break;
+        }
+        case 1:
+        {
+            /** 按钮 */
+            ButtonsCell * btnCell = [[ButtonsCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"ButtonsCell" KLineType:self.kLineType];
+            btnCell.delegate  = self;
+            cell = btnCell;
+            [self updateBtnTitlesWithCell:btnCell];
+            break;
+        }
+        case 2:
+        {
+            /** 询价方 */
+            AskBuyCell *  askBuyCell = (AskBuyCell*)[self getCellWith:tableView cellID:@"AskBuyCell"];
+            askBuyCell.kLineType = self.kLineType;
+            [self setAskBuyCellInfoWithCell:askBuyCell  data:self.askBuyData];
+            cell = askBuyCell;
+            break;
+        }
+        case 3:
+        {   /** 报价方 */
+           QuoteCell* quoteCell = (QuoteCell *)[self getCellWith:tableView cellID:@"QuoteCell"];
+            quoteCell.kLineType = self.kLineType;
+            cell = quoteCell;
+            [self setQuoteCellInfoWithCell:(QuoteCell *)cell indexPath:indexPath QuoteArray:self.quoteArray];
+            break;
+        }
+    
+        default:
+            break;
+    }
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.backgroundColor = MainColor;
+    return cell;
+}
+
+-(void)setQuoteArray:(NSArray *)quoteArray
+{
+    if ([quoteArray isKindOfClass:[NSNull class]]) {
+        return;
+    }
+    _quoteArray = quoteArray;
+    [self reloadData];
+}
+
+-(void)updateBtnTitlesWithCell:(ButtonsCell*)cell{
+    
+    BOOL isMe = NO;
+    for (  OfferModel *model  in self.quoteArray) {
+        if (model.isMe) {
+            isMe = YES;
+        }
+    }
+    
+    if (!isMe && self.kLineType == KLine_beBuyerSpecify) {
+        [cell updateButtonTitleWithTitles:@[@"票源距离",@"撤销报价",@"卖出"]];
+    }else  if (self.quoteArray.count == 0 && self.kLineType == KLine_beSellerSpecify) {
+       [cell updateButtonTitleWithTitles:@[@"票源距离",@"撤销报价",@"买入"]];
+    }
+    
+}
+
+//报价方
+-(void)setQuoteCellInfoWithCell:(QuoteCell*)cell  indexPath:(NSIndexPath*)indexPath QuoteArray:(NSArray *)quoteArray
+{
+
+   
+    OfferModel *model = quoteArray[indexPath.row];
+    
+    NSNumber *rate = model.DiscountRate;
+    NSString *nameStr = [model.OfferName isKindOfClass:[NSNull class]] ? @"" : model.OfferName ;
+    cell.rateLabel.text      = [NSString stringWithFormat:@"%@:%.3f%%",
+                                NSLocalizedString(@"DiscountRate", nil),rate.floatValue ];
+    cell.quoteLabel.text     = [NSString stringWithFormat:@"%@:%@",
+                                NSLocalizedString(@"QuoteParty", nil),nameStr];
+  
+        NSNumber *account = model.Amount;
+        cell.moneyLabel.text = [NSString stringWithFormat:@"%@:%.2f",
+                                NSLocalizedString(@"Amount", nil),account.doubleValue/10000];
+ 
+        if(self.kLineType == KLine_sellerInquiry || self.kLineType == KLine_buyerOffer){
+            /** 我的卖出/纸票/询价卖出 /点击信息  将挑票类型 改成 交割时间 : T+0*/
+            cell.moneyLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"DeliveryTime", nil),
+                                    (model.closeType == nil)? @"" : model.closeType];
+        }else{
+              cell.tradeModeLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"CloseType", nil),
+                                           [Tools getTradeModel:model.TradeMode.integerValue]];
+        }
+    if (model.isMe) {
+        cell.rateLabel.textColor = [UIColor whiteColor];
+        cell.quoteLabel.textColor = [UIColor whiteColor];
+        cell.moneyLabel.textColor = [UIColor whiteColor];
+        cell.tradeModeLabel.textColor = [UIColor whiteColor];
+    }else{
+        cell.rateLabel.textColor = [UIColor colorWithRGBHex:0x93a6be];
+        cell.quoteLabel.textColor = [UIColor colorWithRGBHex:0x93a6be];
+        cell.moneyLabel.textColor =[UIColor colorWithRGBHex:0x93a6be];
+        cell.tradeModeLabel.textColor = [UIColor colorWithRGBHex:0x93a6be];
+    }
+    
+}
+
+-(void)setAskBuyData:(id)askBuyData{
+      _askBuyData = askBuyData;
+     [self reloadData];
+}
+//询价方
+-(void)setAskBuyCellInfoWithCell:(AskBuyCell*)cell  data:(id)data
+{
+    if (data && [data isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dd = data;
+    
+        NSString *askBuyStr = [dd[@"OfferName"] isKindOfClass:[NSNull class]] ? @"" : dd[@"OfferName"] ;
+        NSString *moneyStr = [dd[@"Amount"] isKindOfClass:[NSNull class]] ? @"" : dd[@"Amount"];
+        NSString *rateStr = [dd[@"DiscountRate"] isKindOfClass:[NSNull class]] ? @"" : dd[@"DiscountRate"] ;
+        NSNumber *tradeMode = [dd[@"TradeMode"] isKindOfClass:[NSNull class]] ? @(0) : dd[@"TradeMode"] ;
+
+        cell.askBuyLabel.text  = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"InquiryParty", nil),askBuyStr];
+        cell.moneyLabel.text   = [NSString stringWithFormat:@"%@:%.2lf",NSLocalizedString(@"Amount", nil),moneyStr.doubleValue/10000];
+        cell.rateLabel.text    = [NSString stringWithFormat:@"%@:%.3f%%",NSLocalizedString(@"DiscountRate", nil),rateStr.floatValue];
+
+        
+        if(self.kLineType == KLine_buyerInquiry){
+            /** 询价买入  将挑票类型 改成 交割时间 : T+0*/
+            cell.tradeModeLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"DeliveryTime", nil),dd[@"DeliveryTime"]];
+        }else{
+            cell.tradeModeLabel.text = [NSString stringWithFormat:@"%@:%@",NSLocalizedString(@"CloseType", nil),
+                                        [Tools getTradeModel:tradeMode.integerValue]];
+        }
+    }
+ 
+}
+
+-(UITableViewCell*)getCellWith:(UITableView*)tableView cellID:(NSString *)cellID
+{
+    UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:cellID];
+    if (!cell) {
+        if ([cellID isEqualToString:NSStringFromClass([KLineCell class])]) {
+            cell = [[KLineCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellID cellHeight:KLineHeight];
+        }else{
+            cell = [[ NSClassFromString(cellID) alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellID ];
+        }
+    }
+    return  cell;
+}
+
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    switch (indexPath.section) {
+        case 0: return KLineHeight;
+        case 1: return 52;
+        case 2: return 60; // 按钮高度30 上下边距10
+        default: return 60;
+    }
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    return 2;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
+    return 0.001;
+}
+
+#pragma mark - tableViewDelegate
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 2 || indexPath.section == 3) {
+        if (self.kLineTableViewDelegate && [self.kLineTableViewDelegate respondsToSelector:@selector(KLineTableView:didSelectRowAtIndexPath:)]) {
+            [self.kLineTableViewDelegate  KLineTableView:self didSelectRowAtIndexPath:indexPath];
+        }
+    }
+}
+
+#pragma mark - kLineTableViewDelegate
+-(void)buttonsCell:(ButtonsCell *)cell clickBtnAtIndex:(NSInteger)index kLineType:(KLINE_TYPE)kLineType
+{
+    if (self.kLineTableViewDelegate && [self.kLineTableViewDelegate respondsToSelector:@selector(KLineTableView:buttonsCell:clickBtnAtIndex:kLineType:)]) {
+        [self.kLineTableViewDelegate KLineTableView:self buttonsCell:cell clickBtnAtIndex:index kLineType:kLineType];
+    }
+}
+
+
+
+-(void)klineViewTypeSelect:(NSInteger)index
+{
+    if (self.kLineTableViewDelegate && [self.kLineTableViewDelegate respondsToSelector:@selector(KLineTableView:klineViewTypeSelect:)]) {
+        [self.kLineTableViewDelegate KLineTableView:self klineViewTypeSelect:index];
+    }
+}
+
+@end

@@ -1,0 +1,71 @@
+//
+//  TradeViewModel.h
+//  Billunion
+//
+//  Created by Waki on 2017/2/9.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface TradeViewModel : NSObject
+
+
+- (void)tradeBuyerInquiryAddWithAskBuyDict:(NSMutableDictionary *)askBuyDict
+                                  response:(void(^)(NSString  *message))block;
+
+/**
+ 询价卖出／指定卖出
+
+ @param modelArray  卖出的票据集合
+ @param tradeMode  交易模式：1-挑票成交  2-整批成交
+ @param tradeType   交易类型：0-一般交易，1-指定交易，2-买断交易
+ @param counterPartyId  //交易对手Id
+ @param block 返回信息
+ */
+- (void)selectToSell:(NSArray *)modelArray
+          tradeMode:(NSNumber *)tradeMode
+           tradeType:(NSNumber *)tradeType
+      counterPartyId:(NSNumber *)counterPartyId
+            response:(void(^)(NSString  *message))block;
+
+////获取票据资产列表
+//+(void)requestPropertyBillListWithParams:(NSDictionary *)parems response:( void(^)(NSArray *dataArr,NSString *errorStr))block;
+
+//成交
++ (void)tradeSelectWithInquiryId:(NSNumber *)inquiryId
+                         offerId:(NSNumber *)offerId
+                    tradeRecords:(NSArray *)tradeRecords
+                        response:( void(^)(BOOL isSeccess,NSString *message))block;
+
++ (BOOL)judgeHaveDiscountRate:(NSArray *)selectArray;
+
+/**
+   更换SotckAllType
+
+ @param array  @[StockModel] stockType = StockAllType_Assets
+ @return @[StockModel] = StockAllType_Select_Trade
+ */
++ (NSArray *)changeToTradeWithArray:(NSArray *)array;
+
+
+/**
+ 修改票据的贴现率
+
+ @param discountRate 贴现率
+ @param model StockModel
+ */
++ (void)resetDiscountRate:(NSNumber *)discountRate stockModel:(id)model;
+
+/**
+ 判断所选票据的承兑人类型和票据期限类型是否一致
+
+ @param billList @[<StockModel>]
+ @return YES 一致   NO 不一致
+ */
++ (BOOL)judgeTheSameOfBillList:(NSArray *)billList;
+
+
++ (NSNumber *)getDiscountRateWithStockModel:(id)model;
+
+@end

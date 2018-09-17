@@ -1,0 +1,25 @@
+//
+//  NearStockModel.h
+//  Billunion
+//
+//  Created by QT on 17/2/27.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface NearStockModel : NSObject
+
+// 询价Id
+@property (nonatomic,strong) NSNumber *InquiryId;
+//@property (nonatomic,strong) NSNumber *Id;
+
+//贴现率
+@property (nonatomic ,copy) NSString *DiscountRate;
+
+// 详细地址
+@property (nonatomic, copy) NSString *Remarks;
+
+@property (nonatomic,assign) KLINE_TYPE kLineType;
+
+@end

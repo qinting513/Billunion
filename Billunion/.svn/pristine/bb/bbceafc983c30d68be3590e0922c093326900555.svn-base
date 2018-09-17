@@ -1,0 +1,248 @@
+
+//
+//  ResetPwdViewController.m
+//  PCStock
+//
+//  Created by Waki on 2016/12/28.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#define  ResetPwdSuccess @"修改密码成功"
+#define  verifyTime 10
+
+#import "ResetPwdViewController.h"
+#import "ResetPwdViewModel.h"
+
+@interface ResetPwdViewController ()<UITextFieldDelegate>
+{
+    UIView *_bgView;
+    int _verifyTime;
+    NSTimer *_verifyTimer;
+    UIButton *_verifyBtn;
+   
+}
+
+@end
+
+@implementation ResetPwdViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor blackColor];
+    [self setupBakcButton];
+    [self setupUI];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(endEditingclick)];
+    [self.view addGestureRecognizer:tapGesture];
+}
+
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    if (self.resetType == Reset_verify) {
+        self.title = NSLocalizedString(@"ForgetPassword", nil);
+    }else{
+       self.title = NSLocalizedString(@"ForgetPassword", nil);
+    }
+    self.navigationController.navigationBarHidden = NO;
+}
+
+- (void)setupUI{
+    NSArray *placeholderArr = @[   @[ NSLocalizedString(@"PhoneNumber", nil),
+                                      NSLocalizedString(@"Password", nil)],
+                                   @[
+                                       NSLocalizedString(@"NewPassword", nil),
+                                       NSLocalizedString(@"ConfirmPassword", nil)]
+                                ];
+   NSArray *placeholders = placeholderArr[self.resetType];
+    
+    _bgView = [[UIView alloc] init];
+    _bgView.backgroundColor = [UIColor colorWithRGBHex:0x252525];
+    [self.view addSubview:_bgView];
+    
+    for (int i = 0; i < placeholders.count; i++) {
+        UITextField *field = [UITextField textFieldWithText:nil clearButtonMode:UITextFieldViewModeWhileEditing placeholder: placeholders[i] font:14 textColor:[UIColor whiteColor]];
+        field.delegate = self;
+        [field setValue:[UIColor colorWithRGBHex:0x666666] forKeyPath:@"_placeholderLabel.textColor"];
+        [field setValue:[UIFont boldSystemFontOfSize:13] forKeyPath:@"_placeholderLabel.font"];
+        field.tag = 120+i;
+        [_bgView addSubview:field];
+        
+        if (self.resetType == Reset_pwd) {
+            field.secureTextEntry = YES;
+            field.tintColor = [UIColor blueColor];
+        }
+        
+        if (i>0) {
+            UIView *lineView = [[UIView alloc] init];
+            lineView.tag = 110+i;
+            [_bgView addSubview:lineView];
+        }
+    }
+    UIButton *verifyBtn;
+    if (self.resetType == Reset_verify) {
+        verifyBtn = [UIButton buttonWithTitle:NSLocalizedString(@"GetCode", nil) titleFont:12 titleColor:[UIColor colorWithRGBHex:0x2363af] target:self action:@selector(verifyClick:)];
+        [_bgView addSubview:verifyBtn];
+    }
+    
+    NSString *submit =  NSLocalizedString(@"Submit", nil);
+    NSString *save   =  NSLocalizedString(@"Confirm", nil);
+    UIButton *okBtn = [UIButton buttonWithTitle:(self.resetType==Reset_verify)? submit :save titleFont:15 titleColor:[UIColor whiteColor] target:self action:@selector(okClick)];
+    okBtn.backgroundColor = [UIColor colorWithRGBHex:0x1c4473];
+    [self.view addSubview:okBtn];
+    
+    
+    //bgView
+    _bgView.sd_layout.topSpaceToView(self.view,45+64).leftSpaceToView(self.view,30).rightSpaceToView(self.view,30).heightIs(39*placeholders.count);
+    
+    if (self.resetType == Reset_verify) {
+        //验证码按钮
+        verifyBtn.sd_layout.bottomEqualToView(_bgView).rightEqualToView(_bgView).widthIs(85).heightIs(_bgView.height/placeholders.count);
+    }
+
+    //确定按钮
+    okBtn.sd_layout.topSpaceToView(_bgView,19).rightEqualToView(_bgView).leftEqualToView(_bgView).heightIs(40);
+    okBtn.sd_cornerRadius = @2;
+    
+    for (int i = 0; i < placeholders.count; i++) {
+        //textField
+        UIView *field = [_bgView viewWithTag:120+i];
+        CGFloat fieldH = _bgView.height/placeholders.count;
+        CGFloat rightSpace;
+        if (i>0) {
+            rightSpace = 85;
+        }else{
+            rightSpace = 10;
+        }
+        field.sd_layout.topSpaceToView(_bgView,fieldH*i).leftSpaceToView(_bgView,35/2).rightSpaceToView(_bgView,rightSpace).heightIs(fieldH);
+        
+        //分割线
+        UIView *lineView = [_bgView viewWithTag:110+i];
+        if (lineView) {
+            lineView.sd_layout.topSpaceToView(_bgView,fieldH*i).leftEqualToView(_bgView).rightEqualToView(_bgView).heightIs(1);
+            lineView.backgroundColor = [UIColor colorWithRGBHex:0x333333];
+        }
+    }
+
+}
+
+#pragma mark - 结束编辑
+- (void)endEditingclick
+{
+    [self.view endEditing:YES];
+}
+
+//获取验证码
+- (void)verifyClick:(UIButton *)button{
+    UITextField *field1 = [_bgView viewWithTag:120];
+    __weak typeof(self) weakSelf = self;
+    [LoginViewModel judgeResetPwdWithText1:field1.text text2:nil withType:Reset_verify blobk:^(BOOL isOk, NSString *alertStr) {
+        // 判断是正确的手机号码格式
+        if (isOk) {
+            [LoginViewModel requestValidateCodeWithMobileNumber:field1.text response:^(NSString *errorStr) {
+                if (errorStr) {
+                    [weakSelf.view showWarning:errorStr];
+                }else{
+                  
+                    [weakSelf.view showWarning:  NSLocalizedString(@"ERROR_VERIFY", nil) ];
+                    [weakSelf fireTimer:button];
+                }
+            }];
+        }else{
+            [weakSelf.view showWarning:alertStr];
+            return ;
+        }
+    }];
+
+}
+
+-(void)fireTimer:(UIButton *)button
+{
+    _verifyTime = verifyTime;
+    [self endEditingclick];
+    _verifyBtn = button;
+    [self unClick:button];
+    _verifyTimer=  [NSTimer timerWithTimeInterval:1 target:self selector:@selector(timeOut) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_verifyTimer forMode:NSRunLoopCommonModes];
+    [_verifyTimer fire];
+}
+
+- (void)unClick:(UIButton *)button{
+    button.userInteractionEnabled = NO;
+    button.alpha = 0.4;
+    [button setImage:nil forState:UIControlStateNormal];
+}
+
+- (void)resumeClick:(UIButton *)button{
+    button.userInteractionEnabled = YES;
+    button.alpha = 1.0;
+    [button setTitle: NSLocalizedString(@"GetCode", nil)  forState:UIControlStateNormal];
+}
+
+#pragma mark - 验证码倒计时
+- (void)timeOut{
+    _verifyTime--;
+    [_verifyBtn setTitle:[NSString stringWithFormat:@"%d",_verifyTime] forState:UIControlStateNormal];
+    //    [_verifyBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    
+    if (_verifyTime == 0) {
+        [_verifyTimer invalidate];
+        _verifyTime = verifyTime;
+        [self resumeClick:_verifyBtn];
+    }
+}
+
+#pragma  mark - 确定
+- (void)okClick{
+    [self endEditingclick];
+    
+    UITextField *field1 = [_bgView viewWithTag:120];
+    UITextField *field2 = [_bgView viewWithTag:121];
+
+    __weak typeof(self) weakSelf = self;
+    [ResetPwdViewModel judgeResetPwdWithText1:field1.text text2:field2.text resetPwdType:self.resetType blobk:^(BOOL isOk, NSString *alertStr) {
+        if (isOk) {
+            /**  提交成功，跳到设置密码 */
+            if (self.resetType == Reset_verify) {
+                ResetPwdViewController *vc = [[ResetPwdViewController alloc] init];
+                vc.resetType = Reset_pwd;
+                vc.mobileNumber = field1.text;
+                vc.validateCode = field2.text;
+                [self.navigationController  pushViewController:vc animated:YES];
+            }else{
+                /** 设置密码 发送给后台 */
+                [ResetPwdViewModel resetPasswordWithMobileNumber:weakSelf.mobileNumber
+                                                  validationCode:weakSelf.validateCode
+                                                        password:field1.text
+                                                        response:^(BOOL isOK, NSString *errorStr) {
+                                                            if (isOK) {
+                                                                [weakSelf showAlert:ResetPwdSuccess];
+                                                            }else{
+                                                                [weakSelf.view showWarning:errorStr];
+                                                            }
+                }];
+            }
+        }else{
+         [weakSelf.view showWarning:alertStr];
+        }
+    }];
+}
+
+
+- (void)showAlert:(NSString *)title{
+    __weak typeof(self) weakSelf = self;
+  [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Tips", nil) message:title okTitle:NSLocalizedString(@"Sure", nil) cancelTtile:nil target:self clickBlock:^(BOOL ok, BOOL cancel) {
+      if (ok) {
+          if (weakSelf.resetType == Reset_pwd && [title isEqualToString:ResetPwdSuccess]) {
+              [weakSelf.navigationController popToRootViewControllerAnimated:YES];
+          }
+      }
+  }];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField{
+    [textField resignFirstResponder];
+    return  YES;
+}
+
+
+
+@end

@@ -1,0 +1,281 @@
+//
+//  YYRrefreshControl.m
+//  自定义刷新
+//
+//  Created by song on 16/8/22.
+//  Copyright © 2016年 song. All rights reserved.
+//
+
+#import "YYRrefreshControl.h"
+#import "StockView.h"
+
+
+typedef NS_ENUM(NSInteger,YYRrefreshControlState) {
+    Normal = 0,
+    Pulling = 1,
+    Rrefreshing = 2,
+};
+
+
+@interface YYRrefreshControl()
+
+// 获取全局scrollView进行监听
+@property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) UIScrollView *leftScrollView;
+/**
+ *  本次demo中以下拉改变label显示文字为例;
+ */
+@property (nonatomic, strong) UILabel *label;
+
+@property (nonatomic, assign) YYRrefreshControlState refreshState;
+
+// 保存之前的状态作为判断
+@property (nonatomic, assign) YYRrefreshControlState oldState;
+/** 箭头 */
+@property (nonatomic,strong) UIImageView *arrowImageView;
+/** 菊花 */
+@property (nonatomic,strong) UIActivityIndicatorView *activityView;
+
+@property (nonatomic ,assign) BOOL isStockView;
+
+@end
+
+@implementation YYRrefreshControl
+
+/**
+ *  刷新状态发生改变,进行对应的修改
+ *
+ *  @param refreshState 刷新状态
+ */
+-(void)setRefreshState:(YYRrefreshControlState)refreshState{
+    // 这句话千万不能少,
+    _refreshState = refreshState;
+    
+    UIEdgeInsets inset = self.scrollView.contentInset;
+    
+    switch (refreshState) {
+        case Normal:
+        {
+            if (self.oldState == Rrefreshing) {
+                self.label.text = @"下拉刷新";
+                 self.frame = CGRectMake(0, -64, WIDTH, 64);
+                [UIView animateWithDuration:0.3 animations:^{
+                    self.scrollView.contentInset = UIEdgeInsetsMake(inset.top - 64, inset.left, inset.bottom, inset.right);
+                    if (self.leftScrollView) {
+                          self.leftScrollView.contentInset = UIEdgeInsetsMake(inset.top - 64, inset.left, inset.bottom, inset.right);
+                    }
+                    self.arrowImageView.transform = CGAffineTransformIdentity;
+                } completion:^(BOOL finished) {
+                    
+                }];
+            }
+            self.scrollView.scrollEnabled = YES;
+            if (self.leftScrollView) {
+                self.leftScrollView.scrollEnabled = YES;
+            }
+            self.arrowImageView.hidden = NO;
+            self.activityView.hidden = YES;
+        }
+            
+            break;
+        case Pulling:
+        {
+            [UIView animateWithDuration:0.3 animations:^{
+                 self.arrowImageView.transform=CGAffineTransformMakeRotation(M_PI - 0.01);
+            }];
+             self.label.text = @"释放刷新";
+            break;
+        }
+        case Rrefreshing:
+
+        {
+            self.arrowImageView.hidden = YES;
+            self.activityView.hidden = NO;
+            [self.activityView startAnimating];
+            self.label.text = @"正在刷新";
+            // 告知外界刷新了,相当于发送通知
+            [self sendActionsForControlEvents:UIControlEventValueChanged];
+            
+            // 动画效果
+            [UIView animateWithDuration:0.3 animations:^{
+                self.scrollView.contentInset = UIEdgeInsetsMake(inset.top + 64, inset.left, inset.bottom, inset.right);
+                if (self.leftScrollView) {
+                    self.leftScrollView.contentInset = UIEdgeInsetsMake(inset.top + 64, inset.left, inset.bottom, inset.right);
+                }
+                if (_isStockView) {
+                     self.frame = CGRectMake(0, 0, WIDTH, 64);
+                }else{
+                     self.frame = CGRectMake(0, -64, WIDTH, 64);
+                }
+           
+            } completion:^(BOOL finished) {
+                
+            }];
+            self.scrollView.scrollEnabled = NO;
+            if (self.leftScrollView) {
+                self.leftScrollView.scrollEnabled = NO;
+            }
+        }
+            break;
+            
+        default:
+            break;
+    }
+    self.oldState = refreshState;
+    
+}
+
+/**
+ *  提供给外界调用的方法,  .h文件里面有这个方法
+ */
+- (void)endRefreshing{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // 1.把状态改为正常
+        self.refreshState = Normal;
+        // 2.恢复contentInset
+        // 2.1在set方法里面修改
+        [self.activityView stopAnimating];
+    });
+}
+
+
+/**
+ *  重写initWithFrame,设置下拉刷新尺寸
+ *
+ *  @param frame 控件大小
+ *
+ *  @return self
+ */
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    //设置控件frame
+    CGFloat refreshX = 0;
+    CGFloat refreshH = 64;
+    CGFloat refreshY = -refreshH;
+    CGFloat refreshW = [UIScreen mainScreen].bounds.size.width;
+
+    self = [super initWithFrame:CGRectMake(refreshX, refreshY, refreshW, refreshH)];
+    if (self) {
+        // self.backgroundColor = [UIColor orangeColor];
+        //自定义View
+        [self setupUI];
+    }
+    return self;
+}
+
+- (void)setupUI{
+    self.label.text = @"下拉刷新";
+    [self addSubview:self.label];
+    [self addSubview:self.arrowImageView];
+}
+
+/**
+ *  该控件将要加载到哪个父类视图
+ *
+ *  @param newSuperview 父View
+ */
+-(void)willMoveToSuperview:(UIView *)newSuperview{
+    //通过kvo,监听滚动
+    if ([newSuperview isKindOfClass:[StockView class]]) {
+        _isStockView = YES;
+        // 获取View进行强转, 通过kvo监听滚动
+        StockView *stockView =  (StockView *)newSuperview;
+         self.scrollView = stockView.subsTablView;
+         self.leftScrollView = stockView.leftTableView;
+    }else if([newSuperview isKindOfClass:[UIScrollView class]])
+    {
+        _isStockView = NO;
+        self.scrollView = (UIScrollView *)newSuperview;
+    }
+    // 监听scrollView的contentOffset
+    [self.scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:nil];
+}
+
+/**
+ *  监听方法
+ */
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context{
+    
+    [self refreshChangeState:self.scrollView.contentOffset.y];
+}
+
+/**
+ *  通过监听当前scrollView的状态,来改变refreshControl控件的状态
+ */
+- (void)refreshChangeState:(CGFloat)offsetY{
+
+    if (_isStockView) {
+            self.y = -offsetY-64;
+    }
+
+    if(self.scrollView.isDragging || self.leftScrollView.isDragging){
+
+        CGFloat offsetY = self.scrollView.contentOffset.y;
+        if(self.refreshState == Pulling && offsetY > -64 ){  // -30 > -64
+            NSLog(@"切换到normal状态");
+            self.refreshState = Normal;
+        
+        }else if(self.refreshState == Normal && offsetY <= -64){  // -150 < -64 越往下拉动，offsetY值越小
+            NSLog(@"切换到Pulling状态");
+             self.refreshState = Pulling;
+           
+        }
+    }else{
+        //    手松开：pulling -> refreshing 从拉拽状态 到 刷新状态
+        if(self.refreshState == Pulling){
+            self.refreshState = Rrefreshing;
+            
+        }
+    }
+    
+}
+
+/**
+ *  移除监听方法
+ */
+- (void)dealloc{
+//    NSLog(@"YYRrefreshControl: %s",__func__);
+    [self.scrollView removeObserver:self forKeyPath:@"contentOffset"];
+}
+
+#pragma mark - 懒加载控件 -
+- (UILabel *)label{
+    if (_label == nil) {
+        // 这里就不做约束了, 直接 用frame代替
+        CGFloat labelW = 100;
+        CGFloat labelX = ([UIScreen mainScreen].bounds.size.width - labelW) / 2 + 10;
+        _label = [[UILabel alloc] initWithFrame:CGRectMake(labelX, 10, labelW, 44)];
+        // 文字居中
+        _label.textAlignment = NSTextAlignmentCenter;
+        _label.font = [UIFont systemFontOfSize:14.0];
+        _label.textColor = [UIColor colorWithRed:90.0/255 green:90.0/255 blue:90.0/255 alpha:1.0];
+        _label.textAlignment = NSTextAlignmentCenter;
+        _label.backgroundColor = [UIColor clearColor];
+    }
+    return _label;
+}
+
+-(UIImageView *)arrowImageView
+{
+    if (!_arrowImageView) {
+        _arrowImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"arrow"]];
+        CGFloat x = self.label.x - 20;
+        _arrowImageView.frame = CGRectMake(x, 10, 15, 40);
+    }
+    return _arrowImageView;
+}
+-(UIActivityIndicatorView *)activityView
+{
+    if (!_activityView) {
+        _activityView = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+        CGFloat y = (self.height - 30)*0.5;
+        CGFloat x = self.label.x - 20;
+        _activityView.frame = CGRectMake(x, y, 30, 30);
+        [self addSubview:_activityView];
+    }
+    return _activityView;
+}
+
+
+
+@end

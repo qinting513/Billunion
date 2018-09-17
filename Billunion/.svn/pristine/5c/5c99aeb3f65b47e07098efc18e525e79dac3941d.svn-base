@@ -1,0 +1,23 @@
+//
+//  SellDetailViewModel.h
+//  Billunion
+//
+//  Created by QT on 17/2/16.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface SellerDetailViewModel : NSObject
+
+
+/**
+ 	查询卖方市场询价详情
+
+ @param tradeSide  交易方(0 是卖方市场  1 是买方市场)
+ @param ID        询价ID
+ @param block     响应block
+ */
++(void)requestSellerInquiryDetailWithTradeSide:(int)tradeSide inquiryID:(NSInteger)ID  response:( void(^)(NSArray *dataArr,NSString *errorStr))block;
+
+@end

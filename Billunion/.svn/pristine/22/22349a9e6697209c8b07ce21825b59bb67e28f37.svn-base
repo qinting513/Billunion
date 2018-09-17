@@ -1,0 +1,15 @@
+//
+//  DistanceView.h
+//  Billunion
+//
+//  Created by QT on 2017/3/28.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface DistanceView : UIView
+
+-(void)setDistanceViewWithDistance:(NSString*)dis hour:(NSString *)hour;
+
+@end

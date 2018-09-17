@@ -1,0 +1,31 @@
+//
+//  UserModel.h
+//  Billunion
+//
+//  Created by Waki on 2017/1/12.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "JKDBModel.h"
+
+@interface UserModel : JKDBModel
+
+@property (nonatomic,strong) NSNumber *UserId;
+@property (nonatomic,strong) NSNumber *CompanyId;
+
+/** 超级管理员 系统操作员 普通操作员 */
+@property (nonatomic,strong) NSNumber *UserType;
+/** CompanyType   1 银行 2 非银行金融机构 3 工商企业 */
+//1、企业不能购买银行卖出的票据（无论是询价方还是报价方），银行不能卖票给企业
+//2、询价卖出时，只有银行可以打包卖出票据（无论是挑票或者整批成交方式），其他类型账户只能卖出单张票据
+@property (nonatomic,strong) NSNumber *CompanyType;
+
+@property (nonatomic ,copy) NSString *MobileNumber;
+@property (nonatomic ,copy) NSString *SessionId;
+@property (nonatomic ,copy) NSString *AccountName;
+
+//邮箱 
+@property (nonatomic,strong)NSString *Email;
+
+@end

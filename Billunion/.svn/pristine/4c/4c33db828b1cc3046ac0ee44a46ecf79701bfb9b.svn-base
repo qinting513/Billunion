@@ -1,0 +1,130 @@
+//
+//  MapInfoView.m
+//  Billunion
+//
+//  Created by QT on 17/2/13.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "MapInfoView.h"
+
+#import "MapModel.h"
+
+#define kLeftMargin 15
+#define kTopMargin  10
+#define kTitleLabelWidth 210
+
+@interface MapInfoView()<UITableViewDataSource,UITableViewDelegate>
+
+@end
+
+@implementation MapInfoView
+
+-(instancetype)initWithFrame:(CGRect)frame dataArr:(NSArray*)dataArr
+{
+    if (self = [super initWithFrame:frame]) {
+        _selectedIndex = 0;
+        _dataArr = dataArr;
+        [self tableView];
+    }
+    return self;
+}
+
+-(UITableView *)tableView{
+    if (_tableView == nil) {
+        _tableView = [[UITableView alloc]initWithFrame:
+                      self.bounds style:UITableViewStylePlain];
+        _tableView.dataSource = self;
+        _tableView.delegate = self;
+        _tableView.tableFooterView = [UIView new];
+        _tableView.backgroundColor = [UIColor blackColor];
+        _tableView.alpha = 0.9;
+        _tableView.rowHeight = 43;
+        _tableView.separatorColor = SeparatorColor;
+        [self addSubview:_tableView];
+    }
+    return _tableView;
+}
+
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.dataArr.count;
+}
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+   static NSString *cellID = @"Cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellID];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellID];
+    }
+    cell.backgroundColor = MainColor;
+    cell.alpha = 0.9;
+    MapModel *model = self.dataArr[indexPath.row];
+    
+    UIView *superView = cell.contentView;
+    UILabel *titleLabel = [superView viewWithTag:100];
+    if (!titleLabel) {
+        titleLabel = [UILabel labelWithText:@""
+                                   fontSize:13
+                                  textColor:[UIColor colorWithRGBHex:0x999999]
+                                  alignment:NSTextAlignmentLeft];
+        titleLabel.tag = 100;
+        [superView addSubview:titleLabel];
+        titleLabel.sd_layout.leftSpaceToView(superView,kLeftMargin).topSpaceToView(superView,kTopMargin).bottomSpaceToView(superView,kTopMargin).rightSpaceToView(superView,110);
+    }
+    titleLabel.text = [NSString stringWithFormat:@"询价方:%@",model.CompanyName];
+    
+    UILabel *subLabel = [superView viewWithTag:200];
+    if (!subLabel) {
+        subLabel = [UILabel labelWithText:@""
+                                   fontSize:13
+                                  textColor:[UIColor colorWithRGBHex:0x999999]
+                                  alignment:NSTextAlignmentLeft];
+        subLabel.tag = 200;
+        [superView addSubview:subLabel];
+        subLabel.sd_layout.topSpaceToView(superView,kTopMargin).bottomSpaceToView(superView,kTopMargin).widthIs(100).rightSpaceToView(superView,kLeftMargin-5);
+    }
+    
+    if (model.DiscountRate != nil) {
+          subLabel.text = [NSString stringWithFormat:@"贴现率:%.2f%%",model.DiscountRate.floatValue];
+    }
+  
+    
+    if (indexPath.row == self.selectedIndex) {
+        titleLabel.textColor = [UIColor colorWithRGBHex:0xffffff];
+        subLabel.textColor   = [UIColor colorWithRGBHex:0xffffff];
+    }else{
+        titleLabel.textColor = [UIColor colorWithRGBHex:0x999999];
+        subLabel.textColor   = [UIColor colorWithRGBHex:0x999999];
+    }
+    
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    !self.didSelectIndexBlock ?: self.didSelectIndexBlock(indexPath.row);
+    self.selectedIndex = indexPath.row;
+    [self.tableView reloadData];
+}
+
+-(void)returnSelectedIndex:(NSInteger)index
+{
+    if (index > self.dataArr.count) {
+        return;
+    }
+    self.selectedIndex = index;
+    [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:index inSection:0]
+                          atScrollPosition:UITableViewScrollPositionTop animated:YES];
+    [self.tableView reloadData];
+}
+
+
+
+-(void)dealloc{
+    NSLog(@"----------- %s",__func__);
+}
+
+@end

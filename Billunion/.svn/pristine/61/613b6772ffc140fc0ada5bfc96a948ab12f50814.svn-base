@@ -1,0 +1,69 @@
+
+//
+//  StockScrollView.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "StockScrollView.h"
+
+@interface StockScrollView ()
+{
+    BOOL _scrollAllow;
+}
+
+@end
+
+@implementation StockScrollView
+
+//- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+//
+//{
+//    
+//    [super touchesBegan:touches withEvent:event];
+//    
+//}
+//
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    [super touchesMoved:touches withEvent:event];
+}
+
+//- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+//
+//{
+//    
+//    [super touchesEnded:touches withEvent:event];
+//    
+//}
+
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    _scrollAllow = NO;
+    [self.superview touchesBegan:touches withEvent:event];
+    //NSLog(@"%s",__func__);
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+
+{
+    _scrollAllow = YES;
+     [self.superview touchesEnded:touches withEvent:event];
+    // NSLog(@"%s",__func__);
+    
+}
+
+
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event{
+//    if (_scdelegate && [_scdelegate respondsToSelector:@selector(endClick)]) {
+//        [_scdelegate endClick];
+//    }
+    [self.superview touchesEnded:touches withEvent:event];
+}
+
+
+
+@end

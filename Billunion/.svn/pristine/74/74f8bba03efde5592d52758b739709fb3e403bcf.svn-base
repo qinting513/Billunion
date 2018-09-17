@@ -1,0 +1,265 @@
+
+//
+//  TradeViewModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/2/9.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "TradeViewModel.h"
+#import "StockModel.h"
+#import "AssetsViewModel.h"
+#import "FGNetworking.h"
+#import "StockModel.h"
+
+@implementation TradeViewModel
+
+
+//询价买入
+- (void)tradeBuyerInquiryAddWithAskBuyDict:(NSMutableDictionary *)askBuyDict response:(void(^)(NSString  *message))block
+{
+    //    NSDictionary *dic= @{@"TradeType":@1,@"BillType":@1,@"AcceptorIdentityType":@1,@"AcceptorType":@1,@"HolderIdentityType":@0,@"HolderType":@0,@"DueTimeRange":@5,@"Address":@"北京",@"TotalAmount":@210,@"DiscountRate":@1.12,@"CounterPartyId":@45};
+    
+    
+    DEBUGLOG(@"%@\n%@",TRADE_BUYER_INQUIRY_ADD,askBuyDict);
+    [FGNetworking requsetWithPath:TRADE_BUYER_INQUIRY_ADD params:askBuyDict method:Post handleBlcok:^(id response, NSError *error) {
+        if (!error) {
+                DEBUGLOG(@"%@\n%@",TRADE_BUYER_INQUIRY_ADD,response);
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0) {
+                !block ?: block(NSLocalizedString(@"SUBMIT_OK", nil) );
+               
+            }else{
+                if (block) {
+                    // block([NSString stringWithFormat:@"提交失败，请重试。statusCode:%d",statusCode]);
+                    !block ?: block(NSLocalizedString(@"SUBMIT_FAIL", nil) );
+                }
+            }
+        }else{
+          !block ?: block( NSLocalizedString(@"ERROR_NETWORK", nil) );
+        }
+    }];
+}
+
+//询价卖出
+- (void)tradeSellerInquiryAddWithParams:(NSDictionary *)params response:(void(^)(NSString  *message))block
+{
+//    NSDictionary *dic= @{@"TradeType":@1,@"BillType":@1,@"AcceptorIdentityType":@1,@"AcceptorType":@1,@"HolderIdentityType":@0,@"HolderType":@0,@"DueTimeRange":@5,@"Address":@"北京",@"TotalAmount":@210,@"DiscountRate":@1.12,@"CounterPartyId":@45};
+    DEBUGLOG(@"%@ \n %@",TRADE_SELLER_INQUIRY_ADD,params);
+    [FGNetworking requsetWithPath:TRADE_SELLER_INQUIRY_ADD params:params method:Post handleBlcok:^(id response, NSError *error) {
+    DEBUGLOG(@"%@ \n %@",TRADE_SELLER_INQUIRY_ADD,response);
+        if (!error) {
+            int statusCode = [[response objectForKey:@"Status"] intValue];
+            if ( statusCode == 0) {
+                if (block) {
+                  !block ?: block(NSLocalizedString(@"SUBMIT_OK", nil) );
+                }
+            }else{
+                if (block) {
+                 !block ?: block(NSLocalizedString(@"SUBMIT_FAIL", nil) );
+                }
+            }
+        }else{
+            // NSLog(@"网络请求出错：%@",error);
+             block(NSLocalizedString(@"ERROR_NETWORK", nil));
+            
+        }
+    }];
+}
+
+
+- (void)selectToSell:(NSArray *)modelArray
+          tradeMode:(NSNumber *)tradeMode
+           tradeType:(NSNumber *)tradeType
+      counterPartyId:(NSNumber *)counterPartyId
+            response:(void(^)(NSString  *message))block{
+    
+    NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+    NSMutableArray *BillRecordsArray = [[NSMutableArray alloc] init];
+    
+    if (modelArray.count == 0 || !tradeMode || !tradeType) {
+        return;
+    }
+    
+    for (id model in modelArray) {
+        NSMutableDictionary  *BillRecords = [[NSMutableDictionary alloc] init];
+        if ([model valueForKey:@"DiscountRate"]) {
+            [BillRecords setObject:@([[model valueForKey:@"DiscountRate"] floatValue]) forKey:@"DiscountRate"];
+        }
+        if ([model valueForKey:@"BillId"]) {
+            [BillRecords setObject:[model valueForKey:@"BillId"] forKey:@"BillId"];
+        }
+        
+        if (BillRecords) {
+            [BillRecordsArray addObject:BillRecords];
+        }
+
+    }
+    
+    [params setObject:tradeMode forKey:@"TradeMode"];
+    [params setObject:tradeType forKey:@"TradeType"];
+    [params setObject:BillRecordsArray forKey:@"BillRecords"];
+    
+    if (counterPartyId) {
+        [params setObject:counterPartyId forKey:@"CounterPartyId"];
+    }
+    
+    
+//    NSDictionary *dic = @{@"TradeType":@0,@"TradeMode":@1,@"BillRecords":@[@{@"BillId":@100064,@"DiscountRate":@14.0}]};
+    
+    [self tradeSellerInquiryAddWithParams:params response:^(NSString *message) {
+        if (block) {
+            block(message);
+        }
+    }];
+}
+
+//+(void)requestPropertyBillListWithParams:(NSDictionary *)parems response:( void(^)(NSArray *dataArr,NSString *errorStr))block
+//{
+//    
+//    NSDictionary *params = @{@"OperType":@708,
+//                             @"Param":parems};
+//    DEBUGLOG(@"%@\n%@",BILL_LIST,params);
+//    [FGNetworking requsetWithPath:BILL_LIST params:params method:Post handleBlcok:^(id response, NSError *error) {
+//        if (!error) {
+//            DEBUGLOG(@"%@\n%@",BILL_LIST,response);
+//            int statusCode = [[response objectForKey:@"Status"] intValue];
+//            if ( statusCode == 0 && [response[@"Data"] isKindOfClass:[NSArray class]]) {
+//                
+//                
+//                NSMutableArray *modelArr = [[NSMutableArray alloc] init];
+//                for (int i = 0; i < [response[@"Data"] count]; i++) {
+//                    StockModel *model = [StockModel mj_objectWithKeyValues:response[@"Data"][i]];
+//                    model.stockType = StockAllType_Assets;
+//                    [modelArr addObject:model];
+//                }
+//                
+//                
+//                //                NSArray *modelArr = [MarketModel mj_objectArrayWithKeyValuesArray:response[@"Data"]];
+//                !block ?: block(modelArr,nil);
+//            }else{
+//               !block ?: block(nil,  NSLocalizedString(@"ERROR_DATA", nil));
+//            }
+//        }else{
+//             !block ?: block(nil, NSLocalizedString(@"ERROR_NETWORK", nil));
+//            //NSLog(@"网络请求出错：%@",error);
+//        }
+//    }];
+//}
+
+
++ (void)tradeSelectWithInquiryId:(NSNumber *)inquiryId
+                         offerId:(NSNumber *)offerId
+                    tradeRecords:(NSArray *)tradeRecords
+                        response:( void(^)(BOOL isSeccess,NSString *message))block{
+    if (!inquiryId || !offerId || tradeRecords.count == 0) {
+        block(NO, NSLocalizedString(@"TRADE_FAIL", nil));
+    }
+    NSDictionary *params = @{@"InquiryId":inquiryId,@"OfferId":offerId,@"TradeRecords":tradeRecords};
+    DEBUGLOG(@"%@ \n %@",TRADE_DEAL_SELECT,params);
+  [FGNetworking requsetWithPath:TRADE_DEAL_SELECT params:params method:Post handleBlcok:^(id response, NSError *error) {
+      DEBUGLOG(@"%@ \n %@",TRADE_DEAL_SELECT,response);
+      if (!error) {
+          if ([response[@"Status"] intValue] == 0) {
+              block(YES, NSLocalizedString(@"TRADE_OK", nil));
+          }else{
+              block(NO,NSLocalizedString(@"TRADE_FAIL", nil));
+          }
+      }
+  }];
+}
+
+
++ (BOOL)judgeHaveDiscountRate:(NSArray *)selectArray{
+    for (StockModel *model in selectArray) {
+        if (!model.DiscountRate) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
++ (NSArray *)changeToTradeWithArray:(NSArray *)array{
+    for (StockModel *model in array) {
+        model.stockType = StockAllType_BillDetail;
+    }
+    return array;
+}
+
++ (void)resetDiscountRate:(NSNumber *)discountRate stockModel:(id)model{
+    StockModel *stockModel = (StockModel *)model;
+    stockModel.DiscountRate = discountRate;
+    stockModel.stockType = StockAllType_BillDetail;
+}
+
++ (BOOL)judgeTheSameOfBillList:(NSArray *)billList{
+    StockModel *model = [billList firstObject];
+    for (StockModel *stockModel in billList) {
+        if (stockModel.AcceptorIdentityType != model.AcceptorIdentityType) {
+            return NO;
+        }else{
+            if (stockModel.AcceptorType != model.AcceptorType) {
+                return NO;
+            }else{
+                if (stockModel.DueTimeRange != model.DueTimeRange) {
+                    return NO;
+                }
+            }
+        }
+    }
+    return YES;
+}
+
+
+
++ (NSNumber *)getDiscountRateWithStockModel:(id)model{
+    StockModel *stockModel = (StockModel *)model;
+    return  stockModel.DiscountRate;
+}
+
+
+
+
+
+//+ (NSString *)getDiscountRateWithBillArray:(NSArray *)billArray
+//{
+//    return [NSString stringWithFormat:@"贴现率:%.2f%%",[self getAverageDiscountRateWithBillArray:billArray].floatValue];
+//}
+//
+//+ (NSString *)getAmountWithBillArray:(NSArray *)billArray{
+//    return [NSString stringWithFormat:@"金额(万):%.2f",[self getAllAmountWithBillArray:billArray].doubleValue/10000];
+//}
+//
+//
+//+ (NSNumber *)getAllAmountWithBillArray:(NSArray *)billArray{
+//    CGFloat allAmount = 0;
+//    for (StockModel *model in billArray) {
+//        allAmount += [model.Amount floatValue];
+//    }
+//    if (allAmount == 0) {
+//        return @(0);
+//    }else{
+//        return [NSNumber numberWithFloat:allAmount];
+//    }
+//}
+//
+//+ (NSNumber *)getAverageDiscountRateWithBillArray:(NSArray *)billArray{
+//    int allAmount = 0;
+//    CGFloat totalAmount = 0;
+//    for (StockModel *model in billArray) {
+//        if (model.DiscountRate == nil || [model.DiscountRate floatValue] == 0) {
+//            continue;
+//        }
+//        allAmount += [model.Amount intValue];
+//        totalAmount += [model.Amount intValue] * model.DiscountRate.floatValue;
+//    }
+//    if (allAmount == 0) {
+//        return @0;
+//    }else{
+//        return [NSNumber numberWithFloat:totalAmount/allAmount];
+//    }
+//}
+//
+
+@end

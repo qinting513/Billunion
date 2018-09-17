@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>5</key>
+	<string>未登录，无访问该资源的权限</string>
+	<key>6</key>
+	<string>数据库访问异常</string>
+	<key>16</key>
+	<string>已登录，但无访问该资源的权限</string>
+	<key>1000</key>
+	<string>用户类型错误</string>
+	<key>1007</key>
+	<string>验证码为空或格式不合法</string>
+	<key>1058</key>
+	<string>该设备被限制登录</string>
+	<key>2000</key>
+	<string>无法找到该公司信息</string>
+	<key>2005</key>
+	<string>验证码不正确</string>
+	<key>2006</key>
+	<string>输入帐号或密码错误</string>
+	<key>2020</key>
+	<string>多次尝试失败,用户已被锁定</string>
+	<key>3000</key>
+	<string>该用户在系统中不存在</string>
+	<key>3001</key>
+	<string>该用户输入的公司ID不合法</string>
+	<key>3002</key>
+	<string>该用户的权限不存在</string>
+	<key>3003</key>
+	<string>该用户已被迫下线</string>
+	<key>3004</key>
+	<string>用户已被锁定</string>
+	<key>4001</key>
+	<string>对象无法处理</string>
+	<key>4002</key>
+	<string>参数非法</string>
+	<key>4011</key>
+	<string>交易类型非法</string>
+	<key>4013</key>
+	<string>交易方向非法或不匹配</string>
+	<key>4051</key>
+	<string>不允许给自己报价</string>
+	<key>4052</key>
+	<string>不允许重复报价</string>
+	<key>4062</key>
+	<string>指定的交易方不存在</string>
+</dict>
+</plist>

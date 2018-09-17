@@ -1,0 +1,38 @@
+//
+//  StockTableViewCell.h
+//  Billunion
+//
+//  Created by Waki on 2016/12/30.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "StockScrollView.h"
+
+
+#define tapCellScrollNotification @"tapCellScrollNotification"
+@protocol StockTableViewCellDelegate;
+@interface StockTableViewCell : UITableViewCell
+
+
+@property (nonatomic,assign) id<StockTableViewCellDelegate>delegate;
+
+@property (nonatomic,strong) NSIndexPath *indexPath;
+
+@property (nonatomic,strong) StockScrollView *scrollView;
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier createItems:(NSInteger)index cellWidth:(CGFloat)cellWidth cellHeigth:(CGFloat)cellHeight;
+
+- (void)setCellInfo:(id)data indexPath:(NSIndexPath *)indexPath;
+
+
+@end
+
+@protocol StockTableViewCellDelegate <NSObject>
+
+- (void)cellScrollViewDidScroll:(CGFloat)moveX indexPath:(NSIndexPath *)indexPath;;
+
+- (void)scrollViewMove:(NSIndexPath *)indexPath;
+
+
+@end

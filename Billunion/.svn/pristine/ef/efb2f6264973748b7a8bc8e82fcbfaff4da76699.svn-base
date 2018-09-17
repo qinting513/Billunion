@@ -1,0 +1,192 @@
+
+
+
+
+
+//
+//  ScrollLabelCell.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/3.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "ScrollLabelCell.h"
+#import "LabelCollectionViewCell.h"
+#import "NSTimer+EocBlockSupports.h"
+#import "TradeNewsModel.h"
+
+#define kCellCount 1
+
+@interface ScrollLabelCell () // <UICollectionViewDataSource,UICollectionViewDelegate>
+
+//@property (nonatomic,strong)UICollectionView  *collectionView;
+//@property (nonatomic,strong)UICollectionViewFlowLayout *flowLayout;
+
+@property (nonatomic,strong) NSString *showString;
+
+@property (nonatomic,strong)UIButton *noticeBtn;
+
+@end
+@implementation ScrollLabelCell
+
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        [self setupUI];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tradeNotification:)
+                                                     name:TRADE_NOTIFICATION
+                                                   object:nil];
+    }
+    return self;
+}
+
+-(void)tradeNotification:(NSNotification*)noti{
+    NSArray *datas = [TradeNewsModel findAll];
+    for (TradeNewsModel *model in datas) {
+        if (model.isNotRead) {
+            self.noticeImageView.image = [UIImage imageNamed:@"icons_notice_new"];
+            [self.noticeBtn setTitle:@"您有未读的系统消息，请注意查收!" forState:UIControlStateNormal];
+            break;
+        }
+    }
+}
+
+-(void)setupUI{
+        //大声
+        UIImageView *imgView = [[UIImageView alloc] init];
+        imgView.image = [UIImage imageNamed:@"icons_notice"];
+        [self.contentView addSubview:imgView];
+        self.noticeImageView = imgView;
+    
+        //分割线
+        UIView *lineView = [[UIView alloc] init];
+        lineView.backgroundColor = SeparatorColor;
+        [self.contentView addSubview:lineView];
+    
+        imgView.frame = CGRectMake(STRealY(20), (self.contentView.height-STRealY(50))/2, STRealX(42), STRealY(42));
+    
+          lineView.sd_layout.leftSpaceToView(self.contentView,STRealX(34)).rightSpaceToView(self.contentView,0).bottomSpaceToView(self.contentView,1).heightIs(1);
+    
+    self.noticeBtn = [UIButton buttonWithTitle:@"暂无系统消息" titleFont:13 titleColor:[UIColor colorWithRGBHex:0x93a6be] target:self action:@selector(noticeBtnClick)];
+    
+    self.noticeBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    self.noticeBtn.titleLabel.contentMode = UIViewContentModeLeft;
+    [self.contentView addSubview:self.noticeBtn];
+    self.noticeBtn.sd_layout.topEqualToView(self.contentView).leftSpaceToView(imgView,5).bottomSpaceToView(lineView,1).rightEqualToView(self.contentView);
+
+}
+
+-(void)noticeBtnClick{
+        self.noticeImageView.image = [UIImage imageNamed:@"icons_notice"];
+        NSArray *datas = [TradeNewsModel findAll];
+        for (TradeNewsModel *model in datas) {
+            model.isNotRead = NO;
+        }
+      [self.noticeBtn setTitle:@"暂无系统消息" forState:UIControlStateNormal];
+        if ([self.delegate respondsToSelector:@selector(scrollLabelCell:didSelectItemAtIndexPath:)]) {
+            [self.delegate scrollLabelCell:self didSelectItemAtIndexPath:nil];
+        }
+}
+
+//
+//-(UICollectionView *)collectionView
+//{
+//    if (!_collectionView) {
+//        CGFloat topSpace = 5;
+//        CGFloat width = WIDTH - 39;
+//        CGFloat height = self.contentView.height - topSpace * 2 - 1;
+//        UICollectionViewFlowLayout *fl = [[UICollectionViewFlowLayout alloc]init];
+//        fl.itemSize = CGSizeMake(width,  height);
+//        fl.minimumLineSpacing = 0;
+//        fl.minimumInteritemSpacing = 0;
+//        fl.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+//        self.flowLayout = fl;
+//         CGRect frame = CGRectMake(39, topSpace, width, height );
+//        _collectionView = [[UICollectionView alloc]initWithFrame:frame
+//                                                             collectionViewLayout:fl];
+//        _collectionView.dataSource = self;
+//        _collectionView.delegate = self;
+//        [_collectionView registerClass:[LabelCollectionViewCell class] forCellWithReuseIdentifier:@"LabelCollectionViewCell"];
+//        _collectionView.backgroundColor = MainColor;
+////        _collectionView.scrollEnabled = NO;
+//        [self.contentView addSubview:_collectionView];
+//    }
+//    return _collectionView;
+//}
+//
+//- (void)setupUI{
+//
+
+//}
+//
+//#pragma mark - collectionView DataSource
+//-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
+//{
+//       return 1;
+//}
+//-(NSInteger)collectionView:(UICollectionView *)collectionView
+//    numberOfItemsInSection:(NSInteger)section
+//{
+//  return kCellCount;
+//}
+//
+//-(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+//{
+//    LabelCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"LabelCollectionViewCell" forIndexPath:indexPath];
+//    cell.label.text = self.showString;
+//    cell.backgroundColor = MainColor;
+//    return cell;
+//}
+//
+//- (void)setCellInfo:(NSString *)string{
+//    self.showString = string;
+////    CGFloat width = [self.showString getWidthWithLimitHeight:15 fontSize:13];
+////    self.flowLayout.itemSize = CGSizeMake(width+20, 39);
+//    
+////    [self startTimer];
+//
+//}
+//
+//-(void)startTimer{
+//    
+//    __weak  typeof(self) weakSelf = self;
+//    if (!_timer) {
+//        _timer = [NSTimer eocScheduledTimerWithTimeInterval:0.08 block:^{
+//            CGPoint p = weakSelf.collectionView.contentOffset;
+//            p.x = p.x + 30;
+//            [weakSelf.collectionView setContentOffset:p animated:YES];
+//            if (p.x >= weakSelf.flowLayout.itemSize.width*kCellCount ) {
+//                weakSelf.collectionView.contentOffset = CGPointMake(0, 0);
+//            }
+//        } repeats:YES];
+//        [[NSRunLoop currentRunLoop] addTimer:weakSelf.timer forMode:NSRunLoopCommonModes];
+//        [_timer fire];
+//    }
+//}
+//
+//-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+//{
+//    self.noticeImageView.image = [UIImage imageNamed:@"icons_notice"];
+//    NSArray *datas = [TradeNewsModel findAll];
+//    for (TradeNewsModel *model in datas) {
+//        model.isRead = YES;
+//    }
+//    if ([self.delegate respondsToSelector:@selector(scrollLabelCell:didSelectItemAtIndexPath:)]) {
+//        [self.delegate scrollLabelCell:self didSelectItemAtIndexPath:indexPath];
+//    }
+//}
+
+-(void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    NSLog(@"timer 销毁了===");
+}
+
+@end
+
+
+

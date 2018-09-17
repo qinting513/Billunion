@@ -1,0 +1,383 @@
+
+
+//
+//  KLineViewController.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#define  KLineHeight 270
+
+
+#import "KLineViewController.h"
+
+#import "MapViewController.h"
+#import "BuyerInfoViewController.h"
+
+#import "StockSelectViewController.h"
+#import "BuyerStockSelectViewController.h"
+#import "HeadView.h"
+#import "WyzAlbumViewController.h"
+
+#import "BuyerInfoViewController.h"
+#import "InqueryInfoViewController.h"
+#import "AddressViewController.h"
+#import "KLineTableView.h"
+#import "InfoMationView.h"
+#import "ResetOfferViewController.h"
+#import "YYRrefreshControl.h"
+
+#import "LoginViewController.h"
+
+@interface KLineViewController ()<KLineTableViewDelegate>
+{
+    KLineTableView *_tableView;
+    NSArray *_klineDataArray;
+}
+
+/** 交割时间的View */
+@property (nonatomic,strong) InfoMationView *infoMationView;
+
+@property (nonatomic,strong)YYRrefreshControl *headRefresh;
+
+@end
+
+@implementation KLineViewController
+
+- (KLineViewModel *)kLineViewModel{
+    if (!_kLineViewModel) {
+        _kLineViewModel = [[KLineViewModel alloc] init];
+    }
+    return  _kLineViewModel;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor blackColor];
+    
+    [self setupBakcButton];
+    self.title = NSLocalizedString(@"Trade", nil);
+    [self requestDetail];
+
+}
+
+//查询票据详情
+- (void)requestDetail{
+    __weak typeof(self) weakSelf = self;
+ [self.kLineViewModel requestDetailWithsType:self.kLineType response:^(BOOL isSuccess, NSString *message,id data){
+     if (weakSelf.headRefresh) {
+         [weakSelf.headRefresh endRefreshing];
+     }
+     if (isSuccess) {
+         [weakSelf layoutTableView:data];
+         //查询报价列表
+         [weakSelf requestOfferList];
+             //k线图
+         [weakSelf requestKLineDataWithType:1];
+     }
+ }];
+}
+
+
+- (void)requestOfferList{
+    __weak KLineTableView* weakTableView = _tableView;
+    [self.kLineViewModel requestOfferListWithType:self.kLineType response:^(NSArray *dataArray, NSString *errorStr) {
+        if (!errorStr) {
+            weakTableView.quoteArray = dataArray; //报价方列表数组
+        }
+    }];
+}
+
+#pragma mark - UI 相关
+- (void)layoutTableView:(id)askBuyData{
+    if (!_tableView) {
+        _tableView  =[[KLineTableView alloc] initWithFrame:CGRectMake(0, 64, WIDTH, HEIGHT-64)
+                                                     style:UITableViewStyleGrouped
+                                                 kLineType:self.kLineType
+                                                    images:[self.kLineViewModel getImagesPaths]];
+        _tableView.kLineType = self.kLineType;
+        _tableView.kLineTableViewDelegate = self;
+   
+        self.headRefresh = [[YYRrefreshControl alloc] init];
+        [self.headRefresh addTarget:self action:@selector(headerRefresh:) forControlEvents:UIControlEventValueChanged];
+        [_tableView addSubview:self.headRefresh];
+         [self.view addSubview:_tableView];
+    }
+    /** 询价方信息 */
+    _tableView.askBuyData = askBuyData;
+}
+
+
+/** 有交割时间的View */
+- (InfoMationView *)infoMationView{
+    if (!_infoMationView) {
+        _infoMationView = [[InfoMationView alloc] initWithFrame:self.view.bounds];
+        [self.view addSubview:_infoMationView];
+    }
+    return _infoMationView;
+}
+#pragma mark - 下拉刷新
+-(void)headerRefresh:(YYRrefreshControl *)refresh
+{
+    [self requestDetail];
+}
+
+
+#pragma mark - 网络请求相关
+
+//请求k线图上点的数据
+- (void)requestKLineDataWithType:(K_RATE_MARKET_TYPE)type{
+    __weak typeof(self) weakSelf = self;
+    [self.kLineViewModel requestRateMarketTrendWithType:type kLineType:self.kLineType response:^(NSArray *dataArray, NSString *errorStr) {
+      if (!errorStr) {
+          [weakSelf requestResponseWithDataArray:dataArray];;
+      }
+  }];
+}
+
+//k线数据请求完成，刷新cell
+- (void)requestResponseWithDataArray:(NSArray *)dataArray{
+        _tableView.klineDataArray = dataArray;
+        [_tableView reloadData];
+//        [_tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+}
+
+#pragma mark - tableViewDelegate 
+/** 报价方的 Cell点击调用的方法  
+ 能点击的报价方有：我的买入-询价买入，我的买入-指定买入，我的卖出-询价卖出，我的卖出-指定卖出 */
+-(void)KLineTableView:(KLineTableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath.section == 2) {
+        InqueryInfoViewController *vc = [[InqueryInfoViewController alloc]init];
+        vc.isOffer = NO;
+        vc.companyId = [self.kLineViewModel getInquiryCompanyId];
+        [self.navigationController pushViewController:vc animated:YES];
+        
+    }else if (indexPath.section == 3){
+            if( self.kLineType == KLine_buyerInquiry   ||
+                self.kLineType == KLine_buyerSpecify   ||
+                self.kLineType == KLine_sellerSpecify  ||
+                self.kLineType == KLine_sellerInquiry  ){
+//            我的买入（询价买入、指定买入、指定卖出、询价卖出）
+            BuyerInfoViewController* vc = [[BuyerInfoViewController alloc]init];
+                if (self.kLineType == KLine_buyerInquiry ||
+                    self.kLineType == KLine_buyerSpecify) {
+                    vc.transactionType = TransactionTypeMultiple;
+                }
+               vc.inquiryInfoVM.klineType = self.kLineType;
+            [vc.inquiryInfoVM setCurrentModel:_tableView.quoteArray[indexPath.row]];
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+    }
+}
+
+#pragma mark - KLineTableViewDelegate
+-(void)KLineTableView:(KLineTableView *)tableView klineViewTypeSelect:(NSInteger)index
+{
+  [self requestKLineDataWithType:index];
+}
+
+
+#pragma mark- ButtonsCellDelegate
+-(void)KLineTableView:(KLineTableView *)tableView buttonsCell:(ButtonsCell *)cell clickBtnAtIndex:(NSInteger)index kLineType:(KLINE_TYPE)kLineType
+{
+   // NSLog(@"index:%ld ----- type:%d",index,kLineType);
+    if(![Tools isUserLogin]){
+         [self loginWithLoginOkBlock:nil];
+        return;
+    }
+    
+    if (index == 1 && (self.kLineType  ==  KLine_buyerInquiry ||  //询价买入 撤销报价
+                       self.kLineType == KLine_buyerSpecify ||  //指定买入 撤销报价
+                       self.kLineType == KLine_buyerOffer ||  //报价买入 撤销报价
+                       self.kLineType == KLine_beSellerSpecify || //被指定卖出 撤销报价
+                       self.kLineType == KLine_sellerInquiry ||  //询价卖出 撤销报价
+                       self.kLineType == KLine_sellerSpecify || //指定卖出 撤销报价
+                       self.kLineType == KLine_sellerOffer || //报价卖出 撤销报价
+                       self.kLineType == KLine_beBuyerSpecify)) { //被指定买入 撤销报价
+        [self tradeDelete];
+    }else if ( index == 2 && (self.kLineType  ==  KLine_buyerInquiry ||  //询价买入 撤销报价
+                               self.kLineType == KLine_buyerSpecify ||  //指定买入 撤销报价
+                               self.kLineType == KLine_buyerOffer ||  //报价买入 撤销报价
+                               self.kLineType == KLine_beSellerSpecify || //被指定卖出 撤销报价
+                               self.kLineType == KLine_sellerInquiry ||  //询价卖出 撤销报价
+                               self.kLineType == KLine_sellerSpecify || //指定卖出 撤销报价
+                               self.kLineType == KLine_sellerOffer || //报价卖出 撤销报价
+                               self.kLineType == KLine_beBuyerSpecify)) { //被指定买入 撤销报价
+            [self resetDiscountRate]; //修改报价
+    }else if( index == 1 && self.kLineType == KLine_sellerMarket){
+       // 点击买入按钮
+        [self buyerOfferClick];
+    }else if(self.kLineType == KLine_nearStock){
+        // 附近票源 只有一个按钮
+        [self buyerOfferClick];
+    } else if (self.kLineType == KLine_buyerMarket) {
+        //买方市场  点击卖出按钮
+        if ([self.kLineViewModel judgeInquiry]) {
+            [self.view showWarning:NSLocalizedString(@"CANT_TRADE_YOURSELF", nil) ];
+            return;
+        }
+        BuyerStockSelectViewController *vc = [[BuyerStockSelectViewController alloc]init];
+        vc.klineType = self.kLineType;
+        vc.InquiryId = [self.kLineViewModel getInquiryId];
+        [self.navigationController pushViewController:vc animated:YES];
+    }else{
+         /** 大部分第一个按钮都是 票源距离 */
+        MapViewController *vc = [[MapViewController alloc]init];
+        vc.dataArray = [[self.kLineViewModel getBillAddressWithKlineType:self.kLineType] mutableCopy];
+        vc.kLineType = self.kLineType;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+//买方市场--报价买入
+- (void)buyerOfferClick{
+    if ([self.kLineViewModel judgeInquiry]) {
+        [self.view showWarning:NSLocalizedString(@"CANT_TRADE_YOURSELF", nil) ];
+        return;
+    }
+    if ([self.kLineViewModel getOfferId]) {  //判断自己是否已经购买
+        [self.view showWarning:NSLocalizedString(@"CANT_REPEAT_BUY", nil)];
+        return;
+    }
+    
+    __weak typeof(self) weakSelf = self;
+    [self.kLineViewModel getOfferItemListWithKlineType:self.kLineType response:^(BOOL isOffered, NSArray *billList) {
+            ResetOfferViewController *resetCtl = [[ResetOfferViewController alloc] init];
+            resetCtl.billArray = billList;
+            resetCtl.klineType = weakSelf.kLineType;
+            resetCtl.InquiryId = [weakSelf.kLineViewModel getInquiryId];
+            [weakSelf.navigationController pushViewController:resetCtl animated:YES];
+    }];
+}
+
+//修改报价
+- (void)resetDiscountRate{
+    
+    if (self.kLineType  ==  KLine_buyerInquiry ||  //询价买入
+        self.kLineType == KLine_buyerSpecify ){  //指定买入
+        NSNumber *discountRate = [self.kLineViewModel getOfferDiscountRateWithKlineType:self.kLineType];
+        if (discountRate) {
+            self.infoMationView.inputViewStr = [NSString stringWithFormat:@"%.3f",discountRate ? discountRate.floatValue:0];
+        }
+        [self.infoMationView showWithType:InfoMationViewType_InPut_DiscountRate];
+
+        __weak typeof(self)  weakSelf = self;
+        self.infoMationView.inputTextViewBlock = ^(BOOL isSureBtn,NSString *message){
+            if (isSureBtn && message != nil) {
+                [weakSelf resetDiscountRateWithDiscountRate:message];
+            }
+        };
+    }else{
+        __weak typeof(self) weakSelf = self;
+        [self.kLineViewModel getOfferItemListWithKlineType:self.kLineType response:^(BOOL isOffered, NSArray *billList) {
+            if (weakSelf.kLineType == KLine_sellerSpecify ||
+                weakSelf.kLineType == KLine_sellerOffer   ||
+                weakSelf.kLineType == KLine_sellerInquiry ||
+                weakSelf.kLineType == KLine_buyerOffer) {
+                //进入修改贴现率的页面
+                ResetOfferViewController *resetCtl = [[ResetOfferViewController alloc] init];
+                resetCtl.billArray = billList;
+                resetCtl.klineType = weakSelf.kLineType;
+                if (weakSelf.kLineType == KLine_sellerSpecify ||
+                    weakSelf.kLineType == KLine_sellerInquiry) {
+                    resetCtl.InquiryId = [weakSelf.kLineViewModel getInquiryId];
+                }else{
+                    resetCtl.OfferId = [weakSelf.kLineViewModel getOfferId];
+                    resetCtl.OfferTradeMode = [weakSelf.kLineViewModel getOfferTradeMode];
+                }
+                [weakSelf.navigationController pushViewController:resetCtl animated:YES];
+            }else if (weakSelf.kLineType == KLine_beBuyerSpecify ||
+                      weakSelf.kLineType == KLine_beSellerSpecify){
+                
+                if (isOffered) {
+                    ResetOfferViewController *resetCtl = [[ResetOfferViewController alloc] init];
+                    resetCtl.billArray = billList;
+                    resetCtl.OfferTradeMode = [weakSelf.kLineViewModel getOfferTradeMode];
+                    resetCtl.OfferId = [weakSelf.kLineViewModel getOfferId];
+                    resetCtl.klineType = weakSelf.kLineType;
+                    [weakSelf.navigationController pushViewController:resetCtl animated:YES];
+                }else{
+                    if ([[weakSelf.kLineViewModel getInquiryTradeMode] intValue] == 2 &&
+                        weakSelf.kLineType == KLine_beSellerSpecify) {  //被指定卖出 + 批量成交
+                        ResetOfferViewController *resetCtl = [[ResetOfferViewController alloc] init];
+                        resetCtl.billArray = billList;
+                        resetCtl.InquiryId = [weakSelf.kLineViewModel getInquiryId];
+                        resetCtl.klineType = weakSelf.kLineType;
+                        [weakSelf.navigationController pushViewController:resetCtl animated:YES];
+                    }else{
+                        //如果没有报价信息
+                        BuyerStockSelectViewController *vc = [[BuyerStockSelectViewController alloc]init];
+                        vc.InquiryId = [weakSelf.kLineViewModel getInquiryId];
+                        vc.klineType = weakSelf.kLineType;
+                        vc.billArray = billList;
+                        [weakSelf.navigationController pushViewController:vc animated:YES];
+                    }
+                    
+                }
+            }
+        }];
+    }
+}
+
+
+- (void)resetDiscountRateWithDiscountRate:(NSString *)discountRate{
+    NSNumber * rate = [NSNumber numberWithFloat:discountRate.floatValue];
+    if (self.kLineType == KLine_buyerInquiry || self.kLineType == KLine_buyerSpecify) {
+        //询价买入修改报价／指定买入修改报价
+        __weak typeof(self) weakSelf = self;
+        [self.kLineViewModel resetBuyerInquiryWithInquiryId:[self.kLineViewModel getInquiryId] discountRate:rate response:^(BOOL isSecceed, NSString *message) {
+            [weakSelf.view showWarning:message];
+        }];
+    }
+}
+
+
+- (void)tradeDelete{
+    __weak typeof(self) weakSelf = self;
+    
+    if (self.kLineType == KLine_beSellerSpecify || self.kLineType == KLine_beBuyerSpecify) {
+        if (![self.kLineViewModel getOfferId]) {
+            [self.view showWarning:NSLocalizedString(@"NONE_OFFER", nil) ];
+            return;
+        }
+    }
+
+    [UIAlertController alertControllerWithTitle:@"提示" message:NSLocalizedString(@"IS_CANCEL_OFFER", nil)  okTitle:@"确定" cancelTtile:@"取消" target:self clickBlock:^(BOOL ok, BOOL cancel) {
+        if(ok){
+            [weakSelf.kLineViewModel tradeDeleteWithType:self.kLineType response:^(BOOL isSecceed, NSString *message) {
+                if (isSecceed) {
+                    [weakSelf.view showWarning:message completionBlock:^{
+                        //通知上一个页面刷新列表
+                        !weakSelf.offerDeleteFinish ?: weakSelf.offerDeleteFinish();
+                        [weakSelf.navigationController popViewControllerAnimated:YES];
+                    }];
+                }else{
+                    [weakSelf.view showWarning:message];
+                }
+               
+            }];
+        }
+    }];
+    
+}
+
+
+#pragma mark -  点击图片
+-(void)KLineTableView:(KLineTableView *)tableView browsePhotos:(NSArray *)imgs beginIndex:(NSInteger)index
+{
+    WyzAlbumViewController *wyzAlbumVC = [[WyzAlbumViewController alloc]init];
+    wyzAlbumVC.currentIndex = index;//这个参数表示当前图片的index，默认是0
+    wyzAlbumVC.imgArr = [imgs mutableCopy];
+    [self presentViewController:wyzAlbumVC animated:YES completion:nil];
+}
+
+
+-(void)dealloc{
+    [self.headRefresh removeFromSuperview];
+    NSLog(@"%s",__func__);
+}
+
+@end

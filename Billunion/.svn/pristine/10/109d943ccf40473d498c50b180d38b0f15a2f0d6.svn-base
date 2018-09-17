@@ -1,0 +1,49 @@
+//
+//  OfferModel.h
+//  Billunion
+//
+//  Created by QT on 17/2/25.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface OfferModel : NSObject
+
+/** 
+ {
+ Address = "\U5e7f\U5dde\U5854";
+ DiscountRate = "4.44";
+ Id = 1093;
+ OfferId = 10079;
+ OfferName = "\U666e\U521b\U7968\U80541";
+ TimeStamp = "10:25:07";
+ }
+
+ */
+
+@property (nonatomic,strong)NSString *Address;
+@property (nonatomic,strong)NSNumber *DiscountRate;
+
+//报价方Id
+@property (nonatomic,strong)NSNumber *Id;
+
+@property (nonatomic,strong)NSString *OfferName;
+@property (nonatomic,strong)NSString *TimeStamp;
+
+@property (nonatomic,strong) NSNumber *TradeMode;
+
+@property (nonatomic,strong) NSNumber *CompanyId;
+
+@property (nonatomic,strong)NSNumber *Amount;
+
+/** 交割时间 */
+@property (nonatomic,strong)NSString *closeType;
+
+/** 询价Id */
+@property (nonatomic,strong)NSNumber *InquiryId;
+
+@property (nonatomic,strong) NSArray *OfferItemList;
+
+
+@end

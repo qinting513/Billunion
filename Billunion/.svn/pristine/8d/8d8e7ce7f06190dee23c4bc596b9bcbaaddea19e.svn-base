@@ -1,0 +1,163 @@
+//
+//  InqueryInfoViewController.m
+//  Billunion
+//
+//  Created by QT on 17/2/24.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "InqueryInfoViewController.h"
+
+#import "BuyerInfoCell.h"
+#import "BuyerInfoHeadView.h"
+#import "InquiryInfoViewModel.h"
+
+/** 报价方信息 询价方信息 共用此控制器
+    这个控制器 在 询价卖出 指定卖出 的报价方 点击时跳到此控制器
+    self.isOffer == NO 时 显示询价方信息
+ */
+
+@interface InqueryInfoViewController ()<UITableViewDataSource,UITableViewDelegate>
+@property (nonatomic,strong)  UITableView *tableView;
+@property (nonatomic,strong) NSArray *titles;
+@property (nonatomic,strong)UIView *footerView;
+
+@property (nonatomic,strong) InquiryInfoViewModel *inquiryInfoVM;
+@end
+
+@implementation InqueryInfoViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    self.title = @"询价方信息";
+    [self tableView];
+    
+    if (self.isOffer) {
+        self.tableView.tableFooterView = self.footerView;
+        self.title = @"报价方信息";
+    }
+    
+    [self loadData];
+}
+
+-(void)loadData
+{
+    __weak typeof(self) weakSelf = self;
+    [InquiryInfoViewModel requestInqueryInfoWithTradeSide:0 CompanyId:self.companyId Response:^(id model, NSString *errorStr) {
+        if (errorStr) {
+            [weakSelf.view showWarning:errorStr];
+        }else{
+            [weakSelf.inquiryInfoVM setCurrentModel:model];
+            [weakSelf.tableView reloadData];
+        }
+    }];
+    
+}
+#pragma mark - 懒加载
+
+-(InquiryInfoViewModel *)inquiryInfoVM
+{
+    if (!_inquiryInfoVM) {
+        _inquiryInfoVM = [[InquiryInfoViewModel alloc]init];
+    }
+    return _inquiryInfoVM;
+}
+
+-(UITableView *)tableView{
+    if (_tableView == nil) {
+        _tableView = [[UITableView alloc]initWithFrame:
+                      CGRectMake(0, 64, WIDTH, HEIGHT-64) style:UITableViewStylePlain];
+        _tableView.dataSource = self;
+        _tableView.delegate = self;
+        _tableView.tableFooterView = [UIView new];
+        _tableView.backgroundColor = [UIColor blackColor];
+        _tableView.rowHeight = 48;
+        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        [self.view addSubview:_tableView];
+    }
+    return _tableView;
+}
+
+-(NSArray *)titles
+{
+    if (_titles == nil) {
+        _titles =   @[@"询价方",                   @"交易笔数",@"成功笔数",@"失败笔数",@"成交金额",@"失败金额",@"成交率"];
+        if(self.isOffer){
+          _titles = @[@"报价方",@"联系人",@"联系电话",@"交易笔数",@"成功笔数",@"失败笔数",@"成交金额",@"失败金额",@"成交率"];
+        }
+    }
+    return _titles;
+}
+
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.titles.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    BuyerInfoCell * cell = (BuyerInfoCell*)[self getCellWith:tableView cellID:@"BuyerInfoCell"];
+    cell.titleLabel.text = self.titles[indexPath.row];
+    cell.contentLabel.text = [self.inquiryInfoVM getUserInfoWithIndexPath:indexPath isOffer:self.isOffer];
+    return cell;
+}
+
+-(UITableViewCell*)getCellWith:(UITableView*)tableView cellID:(NSString *)cellID
+{
+    UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:cellID];
+    if (!cell) {
+        cell = [[ NSClassFromString(cellID) alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellID ];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    }
+    return  cell;
+}
+
+
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    return 44;
+}
+
+-(UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    BuyerInfoHeadView *view = [[BuyerInfoHeadView alloc]initWith:NO];
+    view.titleLabel.text = @"基本信息";
+    view.detailBtn.hidden = YES;
+    
+    UIView *line = [[UIView alloc] initWithFrame:CGRectMake(0, 42, WIDTH, 1)];
+    line.backgroundColor = [UIColor colorWithRGBHex:0x666666];
+    [view addSubview:line];
+    
+    return view;
+}
+
+-(UIView *)footerView
+{
+    if (!_footerView) {
+        _footerView = [[UIView alloc]initWithFrame:CGRectMake(0,0, WIDTH, 200)];
+     
+            UIButton *btn = [UIButton buttonWithTitle:@"成交" titleFont:18.0f titleColor:[UIColor whiteColor] target:self action:@selector(btnClick)];
+            btn.backgroundColor = [UIColor colorWithRGBHex:0x2262ac];
+            btn.layer.borderWidth = 1;
+            btn.layer.cornerRadius = 4;
+            btn.layer.borderColor = [UIColor colorWithRGBHex:0x2262ac].CGColor;
+            btn.layer.masksToBounds = YES;
+            btn.frame = CGRectMake((WIDTH-263)/2,30,263,44);
+            [_footerView addSubview:btn];
+    }
+    return _footerView;
+}
+
+/**  点击成交 */
+-(void)btnClick{
+    
+    
+    
+}
+
+@end

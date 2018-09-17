@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>1</key>
+	<string>处理失败</string>
+	<key>6</key>
+	<string>数据库访问异常</string>
+	<key>1000</key>
+	<string>用户类型错误</string>
+	<key>1007</key>
+	<string>验证码为空或格式不合法</string>
+	<key>4001</key>
+	<string>对象无法处理</string>
+	<key>4002</key>
+	<string>参数非法</string>
+	<key>4011</key>
+	<string>交易类型非法</string>
+	<key>4013</key>
+	<string>交易方向非法或不匹配</string>
+	<key>4051</key>
+	<string>不允许给自己报价</string>
+	<key>4052</key>
+	<string>不允许重复报价</string>
+	<key>4062</key>
+	<string>指定的交易方不存在</string>
+</dict>
+</plist>

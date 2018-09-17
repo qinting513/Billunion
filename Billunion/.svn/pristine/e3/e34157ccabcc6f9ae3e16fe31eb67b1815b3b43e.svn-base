@@ -1,0 +1,202 @@
+//
+//  KLineViewModel.h
+//  Billunion
+//
+//  Created by Waki on 2017/1/18.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface KLineViewModel : NSObject
+
+
+//查询市场询价详情
+- (void)requestDetailWithsType:(KLINE_TYPE)type response:(void(^)(BOOL isSuccess,NSString *message,id data))block;
+
+
+/**
+ k线图
+
+ @param type  k线图的类别
+ @param block  NSArray<KlineModel>
+ */
+- (void)requestRateMarketTrendWithType:(K_RATE_MARKET_TYPE)type
+                             kLineType:(KLINE_TYPE)klineType
+                              response:(void(^)(NSArray *dataArray,NSString *errorStr))block;
+
+/**
+ 票据详情里的报价列表
+
+ @param type K线图的内容类别
+ @param block 详情内容
+ */
+- (void)requestOfferListWithType:(KLINE_TYPE)type response:(void(^)(NSArray *dataArray,NSString *errorStr))block;
+
+
+/**
+ //报价买入
+
+ @param billRecords 票据集合   [{"BillId":1000,"DiscountRate":5.5}]
+ @param isAnonymous 是否匿名  0匿名 1不匿名
+ @param tradeType   交易类型：0-一般交易，1-指定交易，2-买断交易
+ @param block 返回消息
+ */
++ (void)tradeBuyerOfferWithBillRecords:(NSArray *)billRecords
+                           isAnonymous:(NSInteger)isAnonymous
+                             TradeType:(NSInteger)tradeType
+                             inquiryId:(NSNumber *)inquiryId
+                              delivery:(NSNumber *)delivery
+                              response:(void(^)(NSString *message,BOOL isFailLocation))block;
+
+
+// 上一个方法 多一个地址
++ (void)tradeBuyerOfferWithBillRecords:(NSArray *)billRecords
+                           isAnonymous:(NSInteger)isAnonymous
+                             TradeType:(NSInteger)tradeType
+                             inquiryId:(NSNumber *)inquiryId
+                              delivery:(NSNumber *)delivery
+                               address:(NSString *)address
+                              response:(void(^)(NSString *message,BOOL isFailLocation))block;
+/**
+ //报价卖出
+
+ @param billRecords 票据集合   [{"BillId":1000,"DiscountRate":5.5}]
+ @param isAnonymous 是否匿名 0匿名 1不匿名
+ @param tradeMode  交易模式：1-挑票成交  2-整批成交
+ @param block 返回消息
+ */
++ (void)tradeSellerOfferWithBillRecords:(NSArray *)billRecords
+                           isAnonymous:(NSInteger)isAnonymous
+                             inquiryId:(NSNumber *)inquiryId
+                              tradeMode:(NSInteger)tradeMode
+                              response:(void(^)(BOOL isSecceed , NSString *message))block;
+
+
+/**
+ 撤销交易
+
+ @param type 类型
+ @param block 返回信息
+ */
+- (void)tradeDeleteWithType:(KLINE_TYPE)type response:(void(^)(NSString *message))block;
+
+
+
+/**
+ 询价买入修改
+
+ @param inquiryId 询价Id
+ @param discountRate 贴现率
+ @param block 返回值
+ */
+- (void)resetBuyerInquiryWithInquiryId:(NSNumber *)inquiryId
+                          discountRate:(NSNumber *)discountRate
+                              response:(void(^)(BOOL isSecceed,NSString *message))block;
+
+/**
+ 询价卖出修改
+
+ @param inquiryId 询价Id
+ @param billRecords 票据集合   [{"BillId":1000,"DiscountRate":5.5}]
+ @param block 返回消息
+ */
++ (void)resetSellerInquiryWithInquiryId:(NSNumber *)inquiryId
+                            billRecords:(NSArray *)billRecords
+                               response:(void(^)(BOOL isSecceed,NSString *message))block;
+
+/**
+ //报价买入修改
+ 
+ @param billRecords 票据集合   [{"BillId":1000,"DiscountRate":5.5}]
+ @param offerId 报价方Id
+ @param address 报价方地址
+ @param block 返回消息
+ */
++ (void)resetBuyerOfferWithBillRecords:(NSArray *)billRecords
+                                offerId:(NSNumber *)offerId
+                                address:(NSString *)address
+                               response:(void(^)(BOOL isSecceed,NSString *message))block;
+
+
+/**
+ 报价卖出修改
+
+ @param billRecords 票据集合   [{"BillId":1000,"DiscountRate":5.5}]
+ @param offerId 报价方Id
+ @param block 返回消息
+ */
++ (void)resetSellerOfferWithBillRecords:(NSArray *)billRecords
+                                offerId:(NSNumber *)offerId
+                               response:(void(^)(BOOL isSecceed,NSString *message))block;
+
+
+/**
+ 获取报价方或询价方的票据列表
+
+ @param klineType 页面类型
+ @param block   isOffered指是否已进行报价 billList报价方或询价方的票据列表
+ */
+- (void)getOfferItemListWithKlineType:(KLINE_TYPE)klineType response:(void(^)(BOOL isOffered,NSArray *billList))block;
+
+
+
+- (void)setCurrentModel:(id)model type:(KLINE_TYPE)klienType;
+
+/**
+ 获取要报价的资源集合
+ 
+ @param billList @<AssetsModel>;
+ @return 资源集合
+ */
++ (NSArray *)getBillRecordsWithBillList:(NSArray *)billList;
+
+
+/** 获取票源地址 */
+-(NSArray *)getBillAddressWithKlineType:(KLINE_TYPE)klineType;
+
+//询价方 Id
+- (NSNumber *)getInquiryId;
+//报价方 Id
+- (NSNumber *)getOfferId;
+
+
+// 报价方公司Id
+-(NSNumber *)getInquiryCompanyId;
+// 自己公司Id
+- (NSNumber *)getMyCompanyId;
+
+
+
+
+//判断是否是询价方是否是自己
+- (BOOL)judgeInquiry;
+
+
+/**
+ 获取询价方交易模式
+
+ @return  //交易模式：1-挑票成交  2-整批成交
+ */
+- (NSNumber *)getInquiryTradeMode;
+
+
+/**
+ 获取报价贴现率
+
+ @param klineType 页面类型
+ @return 贴现率
+ */
+- (NSNumber *)getOfferDiscountRateWithKlineType:(KLINE_TYPE)klineType;
+
+
+//获取票据的总金额
++ (CGFloat)getAllAmountWithBillArray:(NSArray *)billArray;
+//获取票据的平均贴现率
++ (CGFloat)getAverageDiscountRateWithBillArray:(NSArray *)billArray;
+
+//获取图片地址数组
+-(NSArray *)getImagesPaths;
+
+
+@end

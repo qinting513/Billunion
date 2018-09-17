@@ -1,0 +1,162 @@
+
+//
+//  TrandeRecordViewController.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/20.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "TradeRecordViewController.h"
+
+#import "StockAddController.h"
+#import "KLineViewController.h"
+#import "CounterPartyViewController.h"
+#import "StockView.h"
+#import "TradeRecordViewModel.h"
+#import "StockModel.h"
+
+@interface TradeRecordViewController ()<StockViewProtocol>
+@property (nonatomic,strong)StockView *currentStockView;
+@end
+
+@implementation TradeRecordViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    
+    /** 默认给票据行情的 */
+    NSArray * subTitles = [Tools getSubTitlesWithStockAllType:StockAllType_TradingRecord_Seller_Market];
+    
+ 
+    [self layoutMainSelectViweWithTitles:@[ NSLocalizedString(@"MyBuy", nil),
+                                            NSLocalizedString(@"MySell", nil)]];
+    [self layoutSelectViweWithTitles:@[ NSLocalizedString(@"PaperTicket", nil),
+                                        NSLocalizedString(@"ElectricTicket", nil)]
+                                      ];
+    [self layoutScrollViewWithSubTitles:subTitles];
+    
+    StockView *stockView = (StockView *)[self getStockViewWithIndex:0];
+    stockView.delegate = self;
+    self.currentStockView = stockView;
+    [self requestTradeRecordListWithMarketType:self.segmentSelectIndex
+                                      billType:1
+                                          page:1
+                                     stockView:stockView
+                                      isPullUp:NO];
+}
+
+- (void)mainSelectedWithPage:(NSInteger)page{
+    if (page == 1) {
+        UIView *currentView =  [self getStockViewWithIndex:0];
+        if ([currentView isKindOfClass:[StockView class]]) {
+            ((StockView *)currentView).delegate = self;
+            self.currentStockView = (StockView *)currentView;
+             if (((StockView *)currentView).dataArray.count == 0) {
+                 [self requestTradeRecordListWithMarketType:self.segmentSelectIndex
+                                                   billType:1
+                                                       page:1
+                                                  stockView:(StockView *)currentView
+                                                   isPullUp:NO];
+             }
+        }
+    }
+}
+
+
+- (void)subSelectedWithPage:(NSInteger)page{
+   StockView *stockView = (StockView*)[self getStockViewWithIndex:page];
+    self.currentStockView = stockView;
+    stockView.delegate = self;
+    if (stockView.dataArray.count == 0) {
+        [self requestTradeRecordListWithMarketType:self.segmentSelectIndex
+                                          billType:(page+1)
+                                              page:1
+                                         stockView:stockView
+                                          isPullUp:NO];
+    }
+}
+
+#pragma mark - 查看交易对手信息
+- (void)stockDidSelectWithIndexPath:(NSIndexPath *)indexPath
+                          stockView:(id)view{
+    StockView *stockView = (StockView *)view;
+    NSInteger tag = stockView.tag;
+    StockModel *stockModel = stockView.dataArray[indexPath.row];
+    NSLog(@"indexPath:%@ tableViewTag:%ld",indexPath,tag);
+    if(stockModel.CompanyId == nil){
+        [Hud  showTipsText:@"公司ID为空,查询不到数据"];
+        return;
+    }
+    
+    if(tag == 190010) {
+        CounterPartyViewController *vc = [[CounterPartyViewController alloc]init];
+        vc.kLineType = (self.segmentSelectIndex == 0) ? KLine_buyerMarket : KLine_sellerMarket;
+     
+        vc.companyId = stockModel.CompanyId;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+
+-(void)stockViewHeaderRefresh:(StockView *)stockView
+{
+    if ([stockView.superview isKindOfClass:[UIScrollView class]]) {
+        UIScrollView *superView = ( UIScrollView *)stockView.superview;
+        NSInteger page = superView.contentOffset.x / WIDTH;
+        [self requestTradeRecordListWithMarketType:self.segmentSelectIndex
+                                          billType:(page+1)
+                                              page:1
+                                         stockView:stockView
+                                          isPullUp:NO];
+        
+    }
+}
+-(void)stockViewFooterRefresh:(StockView *)stockView
+{
+    if ([stockView.superview isKindOfClass:[UIScrollView class]]) {
+        UIScrollView *superView = ( UIScrollView *)stockView.superview;
+        NSInteger page = superView.contentOffset.x / WIDTH;
+        stockView.numPage ++;
+        [self requestTradeRecordListWithMarketType:self.segmentSelectIndex
+                                          billType:(page+1)
+                                              page:stockView.numPage
+                                         stockView:stockView
+                                          isPullUp:YES];
+        
+    }
+}
+
+#pragma mark - 网络请求
+
+/**
+ 获取数据
+ @param marketType  1 @"我的买入", 2 @"我的卖出"
+ @param billType    1 纸票   2 电票
+ @param stockView   哪一个stockView
+ */
+- (void)requestTradeRecordListWithMarketType:(NSInteger)marketType
+                                    billType:(NSInteger)billType
+                                        page:(NSInteger)page
+                                   stockView:(StockView *)stockView
+                                    isPullUp:(BOOL)isPullUp
+{
+    [TradeRecordViewModel requestTradeRecordsWithMarketType:(marketType+1)
+                                                   BillType:billType
+                                                       page:page
+                                                    itemNum:20
+                                                   response:^(NSArray *dataArr, NSString *errorStr) {
+               [stockView handleResponseWithDataArray:dataArr
+                                            errorStr:errorStr
+                                            isPullUp:isPullUp];
+
+  }];
+}
+
+-(void)dealloc{
+    DEBUGLOG(@"%s",__func__);
+}
+
+
+@end

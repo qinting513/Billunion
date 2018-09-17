@@ -1,0 +1,70 @@
+//
+//  QuestionViewController.m
+//  Billunion
+//
+//  Created by QT on 17/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "QuestionViewController.h"
+#import "QTPlaceholderLabelTextView.h"
+
+@interface QuestionViewController ()<UITextViewDelegate>
+
+@property (nonatomic,strong) QTPlaceholderLabelTextView  *textView;
+@property (nonatomic,strong)UIButton *saveBtn;
+
+@end
+
+@implementation QuestionViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    [self setupRightBarBtn];
+    self.view.backgroundColor = [UIColor blackColor];
+    self.title =  NSLocalizedString(@"FeedbackProblems", nil);
+    self.textView.hidden = NO;
+}
+
+-(void)setupRightBarBtn
+{
+    UIButton *rightBtn = [UIButton buttonWithTitle:NSLocalizedString(@"Sure", nil) titleFont:13 titleColor:[UIColor colorWithRGBHex:0xffffff] target:self action:@selector(rightBtnClick)];
+    rightBtn.frame = CGRectMake(0, 0, 60, 44);
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:rightBtn];
+}
+
+-(void)rightBtnClick
+{
+     // NSLog(@"rightBtnClick");
+    [self.view endEditing:YES];
+}
+
+-(QTPlaceholderLabelTextView *)textView
+{
+    if (!_textView) {
+        _textView = [[QTPlaceholderLabelTextView alloc]init];
+        _textView.delegate = self;
+        _textView.backgroundColor = MainColor;
+        _textView.textColor = [UIColor colorWithRGBHex:0xffffff];
+        _textView.placeholder = NSLocalizedString(@"InputYourOpinion", nil);
+        _textView.font = [UIFont systemFontOfSize:13.0f];
+        _textView.placeholderColor = [UIColor colorWithRGBHex:0x939b9b];
+        [self.view addSubview:_textView];
+        _textView.sd_layout.topSpaceToView(self.view,64+20).leftEqualToView(self.view).rightEqualToView(self.view).heightIs(150);
+    }
+    return _textView;
+}
+
+-(void)textViewDidChange:(UITextView *)textView
+{
+    NSLog(@"意见：%@",textView.text);
+}
+
+
+-(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    [self.view endEditing:YES];
+}
+
+@end

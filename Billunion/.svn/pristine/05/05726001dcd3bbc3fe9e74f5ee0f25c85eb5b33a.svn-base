@@ -1,0 +1,19 @@
+//
+//  StockTableView.h
+//  Billunion
+//
+//  Created by Waki on 2016/12/30.
+//  Copyright © 2016年 JM. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+typedef void(^StockTableViewBlock)(NSIndexPath *indexPath,NSInteger tag);
+@interface StockTableView : UITableView
+
+@property (nonatomic,copy) StockTableViewBlock stockTableViewBlock;
+@property (nonatomic,strong) NSArray *dataArray;
+
+- (instancetype)initWithFrame:(CGRect)frame style:(UITableViewStyle)style;
+
+@end

@@ -1,0 +1,135 @@
+//
+//  StockModel.h
+//  Billunion
+//
+//  Created by Waki on 2017/1/17.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface StockModel : NSObject
+
+//票据金额
+@property (nonatomic ,strong) NSNumber *Amount;
+//贴现率
+@property (nonatomic ,strong) NSNumber *DiscountRate;
+/** DueTimeRange是期限类型，DueTime是到期天数。但是也要根据上下文判断，有些地方duetime也表示期限类型  */
+//票据期限（到期天数）
+@property (nonatomic ,strong) NSNumber *DueTime;
+// 票据期限类型
+@property (nonatomic ,strong) NSNumber *DueTimeRange;
+//票源地址
+@property (nonatomic ,copy) NSString *Address;
+
+//交易状态  0待交易  1交易中  2交易完成
+@property (nonatomic,strong) NSNumber *TradeStatus;
+@property (nonatomic,strong) NSNumber *TradeState;
+
+//交易状态
+@property (nonatomic,strong) NSNumber *TradeResult;
+
+//交易对手Id
+@property (nonatomic ,strong) NSNumber *CounterPartyId;
+//被交易对手名称
+@property (nonatomic,copy) NSString *CounterPartyName;
+//交易对手名称
+@property (nonatomic, copy) NSString *CompanyName;
+//交易对手id 用于交易记录里的
+@property (nonatomic, strong) NSNumber *CompanyId;
+
+//询价方Id
+@property (nonatomic ,strong) NSNumber *OfferId;
+//询价方名称
+@property (nonatomic ,copy) NSString *OfferName;
+//产品编号
+@property (nonatomic ,copy) NSString *ProductCode;
+
+//产品类型  1为纸票  2为点票
+@property (nonatomic ,strong) NSNumber *BillType;
+
+//交易方式
+@property (nonatomic,strong)NSNumber *TradeRole;
+
+//承兑人大类型  （1银行，2非银行）
+@property (nonatomic, strong) NSNumber *AcceptorIdentityType;
+//承兑人类型
+@property (nonatomic ,strong) NSNumber *AcceptorType;
+//承兑人
+@property (nonatomic ,copy) NSString *Acceptor;
+
+//持票人大类型
+@property (nonatomic,strong) NSNumber *HolderIdentityType;
+//持票大类型
+@property (nonatomic, strong) NSNumber *HolderType;
+//持票人
+@property (nonatomic ,copy) NSString *Holder;
+
+//涨跌幅
+@property (nonatomic ,strong) NSNumber *Change;
+//是否提供发票合同 && 是否需要发票合同  // 是 否
+@property (nonatomic ,strong) NSNumber *NeedOrCanReceipt;
+//@"目标客户"; // 全部 本行客户
+@property (nonatomic ,strong) NSNumber *TargetCustomer;
+
+// 查询ID
+@property (nonatomic ,strong) NSNumber *InquiryId;
+// 影像资料url
+@property (nonatomic ,copy) NSString *SnapShot;
+
+@property (nonatomic,strong) NSNumber *Id;
+
+//交易类型 0一般交易  1指定交易  2买断交易
+//一般交易：询价卖出；
+//指定交易：指定卖出／指定买入；
+//买断交易：询价买入
+@property (nonatomic ,strong)  NSNumber *TradeType;
+
+//交易模式 1挑票成交 2批量成交
+@property (nonatomic,strong) NSNumber *TradeMode;
+
+
+//票据状态
+@property (nonatomic,strong) NSNumber *BillState;
+
+//票据Id
+@property (nonatomic, strong) NSNumber *BillId;
+
+//票据号
+@property (nonatomic ,strong) NSNumber *BillNum;
+
+
+//正面图片
+@property (nonatomic ,copy) NSString *PositiveImagePath;
+
+//反面图片
+@property (nonatomic,copy) NSString *BackImagePath;
+
+//到期时间
+@property (nonatomic, copy) NSString *MaturityDate;
+
+// 详细地址
+@property (nonatomic, copy) NSString *Remarks;
+//贴现率
+@property (nonatomic,strong)NSNumber  *TradeRate;
+
+@property (nonatomic,strong)NSString *Contacts;
+@property (nonatomic,strong)NSString *MobileNumber;
+
+//审核状态  待审核--0  已审核--1  审核不通过--2
+@property (nonatomic ,strong) NSNumber *ExamineState;
+
+
+/** 交割时间 */
+@property (nonatomic,strong)NSString *DeliveryTime;
+
+//-------------------------- 以下为自定义参数和方法 -------------------
+//各个票据页面的分类
+@property (nonatomic, assign) StockAllType stockType;
+//票据页面显示的数据
+@property (nonatomic, strong) NSMutableDictionary *keyValues;
+
+- (NSString *)getStockCodeWithRow:(NSInteger)row;
+
+
+@end

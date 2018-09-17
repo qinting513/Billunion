@@ -1,0 +1,42 @@
+
+//
+//  NoticeViewModel.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/5.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "NoticeViewModel.h"
+#import "NoticeModel.h"
+
+@implementation NoticeViewModel
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.dataArray = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void)setupDataArray{
+    for (int i = 0; i < 20; i++) {
+        NoticeModel *model = [[NoticeModel alloc] init];
+        NSString *string = [NSString stringWithFormat:@"jfdsjkfjdsjfdjsklfirejdklklfkdlsf%d",i];
+        
+        if (i == 5) {
+            string = [NSString stringWithFormat:@"%@在很多需要限制一台设备一个账号的应用中经常会用到,在Symbian时代,我们是使用IMEI作为设备的唯一标识的,可惜的是Apple官方不允许开发者获得设备的IMEI%d",string,i];
+        }
+        if (i == 10) {
+            string = [NSString stringWithFormat:@"在很多需要限制一台设备一个账号的应用中经常会用到,在Symbian时代,我们是使用IMEI作为设备的唯一标识的%d",i];
+        }
+        model.title = string;
+        
+        NSString *time = [NSString stringWithFormat:@"I am time%d",i];
+        model.createTime = time;
+        [self.dataArray addObject:model];
+    }
+}
+@end

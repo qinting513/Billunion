@@ -1,0 +1,275 @@
+
+
+//
+//  StockListController.m
+//  Billunion
+//
+//  Created by Waki on 2017/1/3.
+//  Copyright © 2017年 JM. All rights reserved.
+//
+
+#import "StockListController.h"
+#import "StockAddController.h"
+#import "KLineViewController.h"
+#import "StockInfoViewController.h"
+
+#import "StockViewModel.h"
+#import "StockView.h"
+
+@interface StockListController ()
+/** 票据资产  右上角 票据添加按钮 */
+@property (nonatomic,strong) UIButton *rightBarBtn;
+
+@property (nonatomic,strong)StockViewModel *stockViewModel;
+
+@property (nonatomic,strong) NSArray *buyerLeftArray;
+@property (nonatomic,strong) NSArray *buyerRightArray;
+@property (nonatomic,strong) NSArray *sellerLeftArray;
+@property (nonatomic,strong) NSArray *sellerRightArray;
+
+@end
+
+@implementation StockListController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupBakcButton];
+    
+    /** 默认给票据行情的 */
+    NSArray *subTitles =  @[
+                              @[
+                                 @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"票源地址"],
+                                 @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人"]
+                                ],
+                             
+                              @[
+                                 @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"票源地址"],
+                                 @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人"]
+                               ],
+                             ];
+
+    if (self.stockType ==  stock_market){ //票据行情
+         [self layoutMainSelectViweWithTitles:@[@"卖方市场",@"买方市场"]];
+         [self layoutSelectViweWithTitles:@[@"纸票",@"电票"] ];
+    }else if(self.stockType == stock_trading){ //票据交易
+        [self layoutMainSelectViweWithTitles:@[@"票据交易"]];
+        [self layoutSelectViweWithTitles:@[@"询价买入",@"询价卖出",@"指定买入",@"指定卖出"] ];
+                  subTitles =  @[
+                                   @[
+                                     @[@"票据类型",@"票据金额(万)",@"开票日期",@"票据期限",@"交易状态",@"票源地址"],
+                                     @[@"票据类型",@"票据金额(万)",@"开票日期",@"票据期限",@"交易状态",]
+                                    ]
+                                ];
+
+    }else if(self.stockType == stock_assets){
+        [self layoutMainSelectViweWithTitles:@[@"票据资产"]];
+        [self layoutSelectViweWithTitles:@[@"纸票",@"电票"] ];
+        subTitles =  @[@[
+                       @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"持票人",@"交易状态",@"票源地址"],
+                       @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"持票人",@"交易状态"]
+                       ]
+                       ];
+
+    }else{
+        [self layoutMainSelectViweWithTitles:@[@"卖方市场",@"买方市场"]];
+        [self layoutSelectViweWithTitles:@[@"纸票",@"电票"]];
+        subTitles =  @[
+                       @[
+                           @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"交易状态",@"票源地址"],
+                           @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"交易状态"]
+                           ],
+                       
+                       @[
+                           @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"交易状态",@"票源地址"],
+                           @[@"票据金额(万)",@"贴现率(%)",@"承兑人",@"票据期限",@"询价方",@"持票人",@"交易状态"]
+                           ],
+                       ];
+
+    }
+    [self layoutScrollViewWithSubTitles:subTitles];
+    
+}
+
+/**
+ 票据详情买方市场数据请求
+
+ @param type 1为纸票 2为电票
+ */
+- (void)requestSellerInquiryListWithBillType:(int)type{
+    __weak typeof(self) weakSelf = self;
+    [StockViewModel requestSellerInquiryListWithBillType:type response:^(NSArray *modelArr, NSString *errorStr) {
+//       [weakSelf responseDataWithBillType:type dataArray:modelArr  errorStr:errorStr ];
+    }];
+}
+
+
+///**
+// 票据详情卖方市场数据请求
+//
+// @param type 1为纸票 2为电票
+// */
+//- (void)requestSellerOfferListWithBillType:(NSInteger)type{
+//    __weak typeof(self) weakSelf = self;
+//  [StockViewModel requestSellerOfferListWithBillType:type response:^(NSArray *dataArr, NSString *errorStr) {
+//      [weakSelf responseDataWithBillType:type dataArray:dataArr  errorStr:errorStr];
+//  }];
+//}
+
+- (void)requestBuyerInquiryListWithBillType:(NSInteger)type stockView:(StockView *)stockView{
+     __weak typeof(self) weakSelf = self;
+   [StockViewModel requestBuyerInquiryListWithBillType:type page:1 itemNum:20 response:^(NSArray *dataArr, NSString *errorStr) {
+       [weakSelf responseDataWithBillType:type dataArray:dataArr  errorStr:errorStr stockView:stockView];
+   }];
+}
+
+
+- (void)responseDataWithBillType:(NSInteger)type dataArray:(NSArray *)dataArray errorStr:(NSString *)errorStr stockView:(StockView *)stockView{
+    if (dataArray && !errorStr) {
+        if (self.stockType ==  stock_market){ //票据行情
+            if (type == 1) {
+                self.buyerLeftArray = dataArray;
+            }else{
+                self.buyerRightArray = dataArray;
+            }
+            [self reloadTableViewWithBillType:type data:dataArray stockView:stockView];
+        }else if(self.stockType == stock_trading){ //票据交易
+            
+        }else if(self.stockType == stock_assets){  //票据资产
+            
+        }else{    //交易记录
+            
+        }
+    }
+}
+
+
+//得到数据，进行数据刷新
+- (void)reloadTableViewWithBillType:(NSInteger)type data:(NSArray *)array stockView:(StockView *)stockView{
+    if (stockView) {
+        stockView.dataArray = array;
+        [stockView  tableViewReloadData];
+    }
+}
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    if(self.stockType == stock_assets){
+        self.rightBarBtn.hidden = NO;
+    }
+}
+
+-(void)rightBarButtonItem:(NSInteger)index
+{
+    self.rightBarBtn.tag = index;
+    if(self.stockType == stock_assets && index == 0){
+        self.rightBarBtn.hidden = NO;
+    }else if(self.stockType == stock_trading && index == 3){
+        self.rightBarBtn.hidden = NO;
+    }else{
+        self.rightBarBtn.hidden = YES;
+    }
+}
+
+/** 按钮复用 */
+-(UIButton *)rightBarBtn
+{
+    if (!_rightBarBtn) {
+         /** 票据资产 票据添加 按钮 */
+        _rightBarBtn = [UIButton buttonWithTitle:@"票据添加" titleFont:13
+                                      titleColor:[UIColor colorWithRGBHex:0xffffff]
+                                          target:self
+                                          action:@selector(rightBarBtnClick:)];
+      if(self.stockType == stock_trading){
+            /** 票据交易界面 选择按钮 */
+            [_rightBarBtn setTitle:@"选择" forState:UIControlStateNormal];
+            [_rightBarBtn setTitle:@"完成" forState:UIControlStateSelected];
+        }
+        _rightBarBtn.frame = CGRectMake(0, 0, 80, 44);
+        _rightBarBtn.titleEdgeInsets = UIEdgeInsetsMake(0, 0, 0, -30);
+         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:self.rightBarBtn];
+    }
+    return _rightBarBtn;
+}
+
+
+-(void)rightBarBtnClick:(UIButton *)btn{
+   // NSLog(@"=========rightBarBtnClick:%ld",btn.tag);
+    if(self.stockType == stock_assets && btn.tag == 0){
+        StockAddController *vc = [[StockAddController alloc]init];
+        [self.navigationController pushViewController:vc animated:YES];
+        
+    }else if(self.stockType == stock_trading && btn.tag == 3){
+        btn.selected = !btn.selected;
+        
+        if(btn.selected){
+            /** 点击选择操作，显示出左边可选的圈圈 */
+            [self selectedBtnClickReloadTableView:1];
+        }else{
+            /** 点击完成 */
+            [self selectedBtnClickReloadTableView:2];
+        }
+    }
+}
+
+- (void)mainSelectedWithPage:(NSInteger)page{
+    if (page == 1) {
+       UIView *currentView =  [self getStockViewWithIndex:0];
+        if ([currentView isKindOfClass:[StockView class]]) {
+                if (((StockView *)currentView).dataArray.count == 0) {
+                    [self requestBuyerInquiryListWithBillType:1 stockView:(StockView *)currentView];
+                }
+            }
+    }
+}
+
+
+- (void)subSelectedWithPage:(NSInteger)page{
+    [self getStockViewWithIndex:page];
+}
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+     [BuyerInfoTool sharedTool].transactionType = TransactionTypeSingle;
+}
+
+- (void)didSelectedWithIndexPath:(NSIndexPath *)indexPath tableViewTag:(NSInteger)tag{
+   
+    NSLog(@"indexPath:%@ tableViewTag:%ld",indexPath,tag);
+    
+    if(tag-190000 == 0) {
+        switch (self.stockType) {
+            case stock_assets :
+            {
+                KLineViewController *vc = [[KLineViewController alloc]init];
+                vc.kLineType = KLine_askSell;
+                vc.title = @"票据成交";
+                [self.navigationController pushViewController:vc animated:YES];
+              break;
+            }
+            case stock_transactionRecords :
+            {
+                //跳去买家 或 卖家信息
+                StockInfoViewController *vc = [[StockInfoViewController alloc]init];
+                vc.marketType = self.segmentSelectIndex;
+                [self.navigationController pushViewController:vc animated:YES];
+                break;
+            }
+            case stock_market :
+            {
+                KLineViewController *vc = [[KLineViewController alloc]init];
+                vc.kLineType = (self.segmentSelectIndex == 0)? KLine_sellerMarket : KLine_buyerMarket;
+                [self.navigationController pushViewController:vc animated:YES];
+                break;
+            }
+            default:
+                break;
+        }
+        
+    }
+   
+}
+
+
+@end
